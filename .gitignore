@@ -12,7 +12,6 @@ Cargo.lock
 # Generated WebAssembly files
 *.wasm
 *.wasm.map
-*.wat
 
 # OS specific files
 .DS_Store
