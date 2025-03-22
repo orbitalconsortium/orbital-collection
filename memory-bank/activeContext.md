@@ -1,14 +1,14 @@
 # Active Context
 
 ## Current Focus
-The current focus is on optimizing and enhancing the orbital-collection system with its four main components: the collection alkane (factory), the orbital alkane (instances), the container alkane (data storage), and the sale alkane (payment processing). We've implemented all components with a particular focus on the container alkane's efficiency and flexibility, reimplementing it as a TypeScript library. We've also created a new orbitals-support crate that provides traits and utilities for implementing orbital alkanes.
+The current focus is on optimizing and enhancing the orbital-collection system with its four main components: the collection alkane (orbitals-collection-contract), the orbital alkane (orbitals-orbital-contract), the container alkane (orbitals-container-generator), and the sale alkane (orbitals-sale-contract). We've implemented all components with a particular focus on the container alkane's efficiency and flexibility, reimplementing it as a TypeScript library. We've also created a new orbitals-support crate that provides traits and utilities for implementing orbital alkanes.
 
 ## Recent Changes
 - **Complete Implementation**: Implemented all four main components
-  - Collection alkane in alkanes/collection/
-  - Orbital alkane in alkanes/collection-child/
-  - Container alkane in alkanes/orbital-container-asm/ (TypeScript library)
-  - Sale alkane in alkanes/sale/
+  - Collection alkane in alkanes/collection/ (orbitals-collection-contract)
+  - Orbital alkane in alkanes/collection-child/ (orbitals-orbital-contract)
+  - Container alkane in alkanes/orbital-container-asm/ (orbitals-container-generator)
+  - Sale alkane in alkanes/sale/ (orbitals-sale-contract)
 - **Container Alkane Reimplementation**: Converted to TypeScript library
   - Created WAT template with proper memory layout
   - Implemented browser interface for container generation
@@ -22,6 +22,11 @@ The current focus is on optimizing and enhancing the orbital-collection system w
   - Avoids fuel costs for large response bodies
   - Uses __call host function directly without __returndatacopy
 - **Deployment Instructions**: Added detailed deployment instructions using the oyl CLI tool
+- **Package Name Updates**: Updated package names for clarity and consistency
+  - orbitals-collection-contract (formerly alkanes-collection)
+  - orbitals-orbital-contract (formerly alkanes-collection-child)
+  - orbitals-container-generator (formerly orbital-container-asm)
+  - orbitals-sale-contract (formerly alkanes-sale)
 - **Project Structure**: Set up the monorepo structure with workspace configuration
 - **Documentation**: Updated Memory Bank files and created README.md
 
@@ -57,6 +62,12 @@ The current focus is on optimizing and enhancing the orbital-collection system w
 - Explained how to deploy the collection with the container WASM attached
 - Described how to deploy a custom orbital template
 - Detailed how to deploy the sale alkane and purchase orbitals
+
+### Package Naming
+- Used consistent naming convention for all packages
+- Added descriptive suffixes to indicate component type
+- Ensured names reflect the project's purpose
+- Updated all references in documentation and code
 
 ## Next Steps
 

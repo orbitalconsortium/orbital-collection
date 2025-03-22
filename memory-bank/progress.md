@@ -2,7 +2,7 @@
 
 ## What Works
 - ✅ Project structure setup with all four components
-- ✅ Collection alkane implementation
+- ✅ Collection alkane implementation (orbitals-collection-contract)
   - Factory functionality
   - Instance registry
   - Data opcode with transform capabilities
@@ -10,13 +10,13 @@
   - API for sale alkane integration
   - Special call function for container initialization
   - Container sequence tracking
-- ✅ Orbital alkane implementation
+- ✅ Orbital alkane implementation (orbitals-orbital-contract)
   - Standard token functionality
   - Proxy functionality for Data opcode
   - Sequence number handling
   - Superscript index display in name and symbol
   - Collection name/symbol retrieval
-- ✅ Container alkane implementation
+- ✅ Container alkane implementation (orbitals-container-generator)
   - TypeScript library for generating containers
   - WAT template for minimal WASM
   - Browser interface for container generation
@@ -24,14 +24,14 @@
   - Efficient data embedding mechanism
   - Proper CallResponse serialization
   - wabt.js integration for browser compatibility
-- ✅ Sale alkane implementation
+- ✅ Sale alkane implementation (orbitals-sale-contract)
   - Payment processing functionality
   - Integration with collection alkane
   - Instance limit enforcement
   - Payment verification
   - Bulk purchasing with change calculation
   - Terms of service for legal protection
-- ✅ Orbitals Support crate
+- ✅ Orbitals Support crate (orbitals-support)
   - BytesTransform trait for data transformations
   - Orbital trait with default implementations
   - Example implementations for custom transforms
@@ -52,10 +52,10 @@
 - 🔄 Add deployment scripts for automation
 
 ## Current Status
-The project has been fully implemented with all four main components: collection alkane, orbital alkane, container alkane, and sale alkane. We've also created a new orbitals-support crate that provides traits and utilities for implementing orbital alkanes. The basic functionality is working, with a particular focus on the container alkane's efficiency and flexibility. We've reimplemented the container alkane as a TypeScript library that can generate minimal WASM containers directly in the browser.
+The project has been fully implemented with all four main components: collection alkane (orbitals-collection-contract), orbital alkane (orbitals-orbital-contract), container alkane (orbitals-container-generator), and sale alkane (orbitals-sale-contract). We've also created a new orbitals-support crate that provides traits and utilities for implementing orbital alkanes. The basic functionality is working, with a particular focus on the container alkane's efficiency and flexibility. We've reimplemented the container alkane as a TypeScript library that can generate minimal WASM containers directly in the browser.
 
 ### Implemented Features
-1. **Collection Alkane**
+1. **Collection Alkane (orbitals-collection-contract)**
    - Factory functionality to create orbital instances
    - Registry system to track instances
    - Data opcode with transform capabilities
@@ -64,7 +64,7 @@ The project has been fully implemented with all four main components: collection
    - Special call function for container initialization
    - Container sequence tracking
 
-2. **Orbital Alkane**
+2. **Orbital Alkane (orbitals-orbital-contract)**
    - Standard token functionality (name, symbol, total supply)
    - Proxy functionality for Data opcode
    - Sequence number handling
@@ -72,7 +72,7 @@ The project has been fully implemented with all four main components: collection
    - Collection name/symbol retrieval
    - Implementation of the Orbital trait
 
-3. **Container Alkane**
+3. **Container Alkane (orbitals-container-generator)**
    - TypeScript library for generating containers
    - WAT template with proper memory layout
    - Browser interface for container generation
@@ -81,7 +81,7 @@ The project has been fully implemented with all four main components: collection
    - Proper CallResponse serialization
    - wabt.js integration for browser compatibility
 
-4. **Sale Alkane**
+4. **Sale Alkane (orbitals-sale-contract)**
    - Payment processing functionality
    - Integration with collection alkane
    - Instance limit enforcement
@@ -90,7 +90,7 @@ The project has been fully implemented with all four main components: collection
    - Terms of service for legal protection
    - Proper parameter types (u128 values for AlkaneId components)
 
-5. **Orbitals Support Crate**
+5. **Orbitals Support Crate (orbitals-support)**
    - BytesTransform trait for data transformations
    - Orbital trait with default implementations
    - Example implementations for custom transforms
@@ -123,7 +123,7 @@ The project has been fully implemented with all four main components: collection
 - None currently identified
 
 ## Recent Achievements
-- Implemented all four main components
+- Implemented all four main components with proper package names
 - Created the orbitals-support crate with BytesTransform and Orbital traits
 - Reimplemented the container alkane as a TypeScript library
 - Created browser interface for container generation

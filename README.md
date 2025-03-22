@@ -105,7 +105,7 @@ node examples/node-example.js /path/to/your/data.file /path/to/output/container.
 Deploy the collection alkane with the container WASM attached:
 
 ```bash
-cargo build --release --package alkanes-collection
+cargo build --release --package orbitals-collection-contract
 oyl alkane new-contract -c ./container.wasm -data 6,COLLECTION_TEMPLATE_NUMBER,0,name_part1,name_part2,symbol
 ```
 
@@ -121,8 +121,8 @@ This will deploy the collection alkane with the container WASM attached and retu
 If you want to use a custom orbital template with a different transform than the default one, deploy it using:
 
 ```bash
-cargo build --release --package alkanes-collection-child
-oyl alkane new-contract -c ./target/release/alkanes_collection_child.wasm -data 3,ORBITAL_TEMPLATE_ID,100
+cargo build --release --package orbitals-orbital-contract
+oyl alkane new-contract -c ./target/release/orbitals_orbital_contract.wasm -data 3,ORBITAL_TEMPLATE_ID,100
 ```
 
 Where:
@@ -136,7 +136,7 @@ This will deploy the orbital template and return a transaction ID and vout. Note
 Deploy the sale alkane using:
 
 ```bash
-cargo build --release --package alkanes-sale
+cargo build --release --package orbitals-sale-contract
 oyl alkane execute -data 6,SALE_TEMPLATE_ID,0,collection_block,collection_tx,payment_block,payment_tx,price,limit
 ```
 
@@ -245,7 +245,9 @@ npm run build
 2. Build the Rust components:
 
 ```bash
-cargo build --release
+cargo build --release --package orbitals-collection-contract
+cargo build --release --package orbitals-orbital-contract
+cargo build --release --package orbitals-sale-contract
 ```
 
 ## License

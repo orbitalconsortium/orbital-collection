@@ -1,8 +1,8 @@
 [package]
-name = "alkanes-orbital-collection"
+name = "orbitals-collection-contract"
 version = "0.1.0"
 edition = "2021"
-description = "orbital collections on alkanes"
+description = "collection alkane for orbital collections"
 authors = ["flex"]
 
 [lib]

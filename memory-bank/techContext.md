@@ -60,6 +60,13 @@ orbital-collection/
 └── reference/                 - Reference implementations
 ```
 
+### Package Names
+- **orbitals-collection-contract** - Collection alkane implementation
+- **orbitals-orbital-contract** - Orbital alkane implementation
+- **orbitals-container-generator** - Container alkane TypeScript library
+- **orbitals-sale-contract** - Sale alkane implementation
+- **orbitals-support** - Support library for orbital alkanes
+
 ### Build Configuration
 The project is configured as both a cdylib (for WebAssembly compilation) and rlib (for Rust library usage):
 

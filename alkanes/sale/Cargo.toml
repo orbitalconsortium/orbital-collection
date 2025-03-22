@@ -1,5 +1,5 @@
 [package]
-name = "alkanes-sale"
+name = "orbitals-sale-contract"
 version = "0.1.0"
 edition = "2021"
 description = "sale alkane for orbital collections"
