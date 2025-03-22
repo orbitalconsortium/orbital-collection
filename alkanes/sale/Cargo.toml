@@ -1,0 +1,27 @@
+[package]
+name = "alkanes-sale"
+version = "0.1.0"
+edition = "2021"
+description = "sale alkane for orbital collections"
+authors = ["flex"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+alkanes-support = { git = "https:/github.com/kungfuflex/alkanes-rs" }
+alkanes-runtime = { git = "https://github.com/kungfuflex/alkanes-rs" }
+metashrew-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+protorune-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+ordinals = { git = "https://github.com/kungfuflex/alkanes-rs" }
+anyhow = "1.0.94"
+bitcoin = { version = "0.32.4", features = ["rand"] }
+
+[dev-dependencies]
+once_cell = "1.19.0"
+wasm-bindgen-test = "0.3.40"
+alkanes-runtime = { git = "https://github.com/kungfuflex/alkanes-rs", features = ["test-utils"] }
+
+[features]
+default = []
+test = []

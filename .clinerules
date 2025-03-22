@@ -1,0 +1,110 @@
+# Project Intelligence for orbital-collection
+
+## Code Patterns
+
+### Storage Pattern
+- Use StoragePointer::from_keyword("/key-name") for all persistent storage
+- Follow the established naming convention for storage keys:
+  - `/name` - Token name
+  - `/symbol` - Token symbol
+  - `/totalsupply` - Total supply tracking
+  - `/instances` - Registry of created orbital instances
+  - `/data` - Base data for the collection
+  - `/initialized` - Initialization guard
+  - `/payment-alkane` - Payment alkane ID in the sale alkane
+  - `/price` - Price per instance in the sale alkane
+  - `/limit` - Maximum number of instances in the sale alkane
+  - `/sold` - Number of instances sold in the sale alkane
+
+### Security Patterns
+- Always call observe_initialization() in Initialize operation
+- Use proper error handling with anyhow
+- Implement comprehensive error messages
+- Ensure proper authentication for factory operations
+- Validate payment amounts in the sale alkane
+- Enforce instance limits in both collection and sale alkanes
+
+### Implementation Patterns
+- Implement Token trait for standard token functionality
+- Use AlkaneResponder trait for message dispatching
+- Follow the standard opcode format for consistency
+- Implement view functions as no-state-change operations
+- Use MessageDispatch derive macro for opcode handling
+- Use declare_alkane! macro for proper runtime integration
+
+## Component Patterns
+- Collection alkane acts as a factory for orbital instances
+- Orbital instances proxy Data requests back to the collection
+- Container alkane provides efficient static data storage
+- Sale alkane handles payment processing and instance creation
+- Apply transforms based on sequence numbers (address [2, n])
+
+## Container Implementation
+- Use TypeScript library for generating container WASM files
+- Use WAT (WebAssembly Text Format) for direct control and optimization
+- Generate container WASM from a template with embedded data
+- Provide multiple interfaces (browser, TypeScript API, Node.js)
+- Focus on minimal size and maximum efficiency
+- Ensure correct CallResponse structure in the WAT template
+- Use wabt.js for WAT to WASM conversion in the browser
+
+## Opcode Standards
+- 0: Initialize() - Initialize the alkane
+- 77: Purchase() - Purchase an orbital instance (sale alkane only)
+- 99: GetName() -> String
+- 100: GetSymbol() -> String
+- 101: GetTotalSupply() -> u128
+- 1000: GetData() -> Vec<u8>
+
+## Critical Implementation Paths
+1. Collection to Orbital Factory:
+   - Collection creates orbital instances with unique sequence numbers
+   - Collection maintains a registry of all instances it creates
+   - Collection provides a standardized interface for instance creation
+
+2. Data Flow:
+   - User requests data from an orbital instance (opcode 1000)
+   - Orbital proxies the request to its collection
+   - Collection retrieves base data from the container
+   - Collection applies transform based on sequence number
+   - Transformed data is returned to the user
+
+3. Purchase Flow:
+   - User sends payment to the sale alkane (opcode 77)
+   - Sale alkane verifies the payment amount and alkane ID
+   - Sale alkane checks if the instance limit has been reached
+   - Sale alkane calls the collection alkane's API to create a new orbital instance
+   - Collection alkane creates the instance with the next available sequence number
+   - Sale alkane returns the newly created orbital instance to the user
+
+4. Container Generation:
+   - Start with a WAT template that exports the __execute function
+   - Embed data bytes directly in the WAT template
+   - Replace placeholders for data and size
+   - Convert the WAT to WASM using wabt.js in the browser
+   - The container returns a properly formatted CallResponse
+
+## Project Preferences
+- Use Rust 2021 edition for Rust components
+- Use TypeScript for the container alkane
+- Follow standard naming conventions for each language
+- Use anyhow for error handling in Rust
+- Implement comprehensive error messages
+- Optimize WASM binary size, especially for the container
+- Provide multiple interfaces for flexibility
+
+## Known Challenges
+- Implementing efficient proxy chain for Data opcode
+- Designing effective transform logic based on sequence numbers
+- Optimizing the container alkane for minimal size
+- Ensuring proper relationships between collection and orbital instances
+- Implementing secure payment processing in the sale alkane
+- Enforcing instance limits across both collection and sale alkanes
+- Handling large data files in the container generation process
+
+## Tool Usage Patterns
+- Use cargo for building and testing Rust components
+- Use npm for building and testing TypeScript components
+- Use wabt.js for WAT to WASM conversion in the browser
+- Compile to WebAssembly for deployment
+- Use git for version control

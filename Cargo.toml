@@ -1,0 +1,18 @@
+[workspace]
+members = [
+    "alkanes/collection",
+    "alkanes/collection-child",
+    "alkanes/sale",
+    "alkanes/orbitals-support",
+    "src",
+    "tests",
+]
+
+[workspace.dependencies]
+alkanes-support = { git = "https:/github.com/kungfuflex/alkanes-rs" }
+alkanes-runtime = { git = "https://github.com/kungfuflex/alkanes-rs" }
+metashrew-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+protorune-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+ordinals = { git = "https://github.com/kungfuflex/alkanes-rs" }
+anyhow = "1.0.94"
+bitcoin = { version = "0.32.4", features = ["rand"] }

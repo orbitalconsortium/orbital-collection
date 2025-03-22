@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Container Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            display: block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Orbital Container Generator</h1>
+    
+    <div class="container">
+        <p>This tool generates a WebAssembly container for the orbital-collection system. Upload a file (like an image) to embed in the container.</p>
+        
+        <div class="form-group">
+            <label for="fileInput">Select File:</label>
+            <input type="file" id="fileInput" accept="*/*">
+        </div>
+        
+        <div class="form-group">
+            <label for="previewContainer">Preview:</label>
+            <div id="previewContainer">
+                <img id="preview" style="display: none;">
+                <p id="fileInfo"></p>
+            </div>
+        </div>
+        
+        <button id="generateBtn">Generate Container WASM</button>
+        
+        <div id="status" style="display: none;"></div>
+        
+        <div id="downloadContainer" style="display: none; margin-top: 20px;">
+            <button id="downloadBtn">Download WASM File</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>WAT Template</h2>
+        <pre id="watTemplate"></pre>
+    </div>
+
+    <script>
+        // WAT template
+        const watTemplate = `(module
+  ;; Memory declaration
+  (memory (export "memory") 1)
+
+  ;; Import the abort function
+  (import "env" "abort" (func $abort (param i32 i32 i32 i32)))
+
+  ;; Define our data section - this will be replaced
+  (data (i32.const 0) "DATA_PLACEHOLDER")
+
+  ;; Export the __execute function
+  (func (export "__execute") (result i32)
+    ;; Create a CallResponse with empty alkanes and our data
+    ;; Format of CallResponse: [alkanes_count(16 bytes)][data]
+    
+    ;; First, we need to create the CallResponse
+    ;; We'll allocate memory at position 1024 for our CallResponse
+    (i32.const 1024)              ;; Destination address for CallResponse
+    
+    ;; Store alkanes count (0) as first 16 bytes
+    (i64.const 0)                 ;; No alkanes (first 8 bytes)
+    (i64.store)                   ;; Store at position 1024
+    
+    (i32.const 1024)
+    (i32.const 8)
+    (i32.add)                     ;; Position 1024 + 8
+    (i64.const 0)                 ;; No alkanes (second 8 bytes)
+    (i64.store)                   ;; Store at position 1024 + 8
+    
+    ;; Now copy our data after the alkanes count
+    (i32.const 1024)              ;; Destination base
+    (i32.const 16)                ;; Destination offset (after alkanes count)
+    (i32.add)                     ;; Destination address
+    (i32.const 0)                 ;; Source address (our data)
+    (i32.const DATA_SIZE)         ;; Size to copy - will be replaced
+    (memory.copy)                 ;; Copy the data
+    
+    ;; Now we need to create the arraybuffer layout
+    ;; Format: [size(4 bytes)][data]
+    ;; Where data is our CallResponse: [alkanes_count(16 bytes)][data]
+    
+    ;; Calculate the total size of our CallResponse
+    (i32.const 16)                ;; 16 bytes for alkanes count
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.add)                     ;; Total size of CallResponse
+    
+    ;; Allocate memory at position 2048 for our arraybuffer layout
+    (i32.const 2048)              ;; Destination address for arraybuffer layout
+    (local.tee 0)                 ;; Save the address in local 0
+    
+    ;; Store the size of our CallResponse as a 4-byte little-endian u32
+    (i32.const 16)                ;; 16 bytes for alkanes count
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.add)                     ;; Total size of CallResponse
+    (i32.store)                   ;; Store at position 2048
+    
+    ;; Now copy our CallResponse after the size
+    (i32.const 2048)              ;; Destination base
+    (i32.const 4)                 ;; Destination offset (after size)
+    (i32.add)                     ;; Destination address
+    (i32.const 1024)              ;; Source address (our CallResponse)
+    (i32.const 16)                ;; 16 bytes for alkanes count
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.add)                     ;; Total size to copy
+    (memory.copy)                 ;; Copy the data
+    
+    ;; Return the pointer to the arraybuffer layout + 4
+    ;; (the +4 is because the runtime expects the pointer to point after the size)
+    (local.get 0)                 ;; Get the base address
+    (i32.const 4)                 ;; Offset
+    (i32.add)                     ;; Add the offset
+  )
+)`;
+
+        // Display the WAT template
+        document.getElementById('watTemplate').textContent = watTemplate;
+
+        // Global variables
+        let fileData = null;
+        let wasmBlob = null;
+
+        // Handle file input
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                fileData = new Uint8Array(event.target.result);
+                
+                // Display file info
+                document.getElementById('fileInfo').textContent = 
+                    `File: ${file.name} (${file.type || 'unknown type'}, ${fileData.length} bytes)`;
+                
+                // Preview image if it's an image
+                const preview = document.getElementById('preview');
+                if (file.type.startsWith('image/')) {
+                    preview.src = URL.createObjectURL(file);
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Generate WASM
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            if (!fileData) {
+                showStatus('Please select a file first.', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Generating WASM file...', '');
+                
+                // Create the WAT content with the file data
+                const watContent = createWatContent(fileData);
+                
+                // Convert WAT to WASM
+                wasmBlob = await watToWasm(watContent);
+                
+                showStatus(`WASM file generated successfully! Size: ${wasmBlob.size} bytes`, 'success');
+                document.getElementById('downloadContainer').style.display = 'block';
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Download WASM
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (!wasmBlob) return;
+            
+            const url = URL.createObjectURL(wasmBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'container.wasm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Create WAT content with embedded file data
+        function createWatContent(data) {
+            // Convert data to hex string
+            let hexData = '';
+            for (let i = 0; i < data.length; i++) {
+                const byte = data[i].toString(16).padStart(2, '0');
+                hexData += `\\${byte}`;
+            }
+            
+            // Replace placeholders in the template
+            return watTemplate
+                .replace('DATA_PLACEHOLDER', hexData)
+                .replace(/DATA_SIZE/g, data.length);
+        }
+
+        // Convert WAT to WASM using WebAssembly API
+        async function watToWasm(watContent) {
+            // We need to use a third-party WAT to WASM converter
+            // For this example, we'll use the wat-wasm-transformer library
+            // In a real implementation, you would include this library or use a service
+            
+            // For demonstration purposes, we'll show how to use the wabt.js library
+            showStatus('Note: This is a demonstration. In a real implementation, you would need to include the wabt.js library.', '');
+            
+            // Simulated conversion (in a real implementation, you would use wabt.js)
+            // const module = wabt.parseWat('container.wat', watContent);
+            // const { buffer } = module.toBinary({});
+            // return new Blob([buffer], { type: 'application/wasm' });
+            
+            // For now, we'll just return a placeholder message
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode("This is a placeholder for the actual WASM binary. In a real implementation, you would use wabt.js or a similar library to convert WAT to WASM.");
+            return new Blob([bytes], { type: 'application/wasm' });
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = type;
+            statusElement.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

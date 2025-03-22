@@ -1,0 +1,39 @@
+{
+  "name": "orbital-container-asm",
+  "version": "0.1.0",
+  "description": "Generate WebAssembly containers for orbital-collection",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "webassembly",
+    "wat",
+    "orbital",
+    "container"
+  ],
+  "author": "flex",
+  "license": "MIT",
+  "dependencies": {
+    "binaryen": "^112.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "src",
+    "template.wat"
+  ],
+  "browser": {
+    "fs": false,
+    "path": false
+  }
+}
