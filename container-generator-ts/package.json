@@ -7,7 +7,11 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "generate": "node dist/cli.js"
+  },
+  "bin": {
+    "orbitals-container-generate": "./dist/cli.js"
   },
   "keywords": [
     "orbitals",
@@ -18,7 +22,8 @@
   "author": "flex",
   "license": "MIT",
   "dependencies": {
-    "wabt": "^1.0.32"
+    "wabt": "^1.0.32",
+    "commander": "^10.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

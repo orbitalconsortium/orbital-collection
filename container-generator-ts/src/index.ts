@@ -1,15 +1,66 @@
+// Browser version
+let fs: any;
+let path: any;
+let __dirname: string = '';
+let isNode = false;
+
+// Check if we're in a Node.js environment
+try {
+  // These imports will only work in Node.js
+  fs = require('fs');
+  path = require('path');
+  __dirname = __dirname || '';
+  isNode = true;
+} catch (e) {
+  // We're in a browser environment
+  isNode = false;
+}
+
 /**
- * Template for the WebAssembly Text Format (WAT) file
- * This template will be used to generate the container WASM
+ * Options for generating a container
  */
-export const WAT_TEMPLATE = `(module
+export interface ContainerOptions {
+  /**
+   * Optional template to use instead of the default
+   */
+  template?: string;
+  
+  /**
+   * Optional template content to use instead of loading from a file
+   */
+  templateContent?: string;
+}
+
+/**
+ * Generate a WAT file with embedded data
+ * 
+ * @param data The data to embed in the WAT file
+ * @param options Options for generating the WAT file
+ * @returns The WAT file content as a string
+ */
+export function generateWat(data: Uint8Array, options: ContainerOptions = {}): string {
+  // Get the template content
+  let template = '';
+  
+  if (options.templateContent) {
+    // Use the provided template content
+    template = options.templateContent;
+  } else if (isNode && options.template) {
+    // In Node.js, read the template from a file
+    template = fs.readFileSync(options.template, 'utf-8');
+  } else if (isNode) {
+    // In Node.js, read the default template
+    template = fs.readFileSync(path.join(__dirname, '..', 'template.wat'), 'utf-8');
+  } else {
+    // In the browser, use the default template from the global variable
+    template = `(module
   ;; Memory declaration
   (memory (export "memory") 1)
 
   ;; Import the abort function
   (import "env" "abort" (func $abort (param i32 i32 i32 i32)))
 
-  ;; Define our data section - this will be replaced
+  ;; Define our data section - this will be replaced by our script
   (data (i32.const 0) "DATA_PLACEHOLDER")
 
   ;; Export the __execute function
@@ -36,7 +87,7 @@ export const WAT_TEMPLATE = `(module
     (i32.const 16)                ;; Destination offset (after alkanes count)
     (i32.add)                     ;; Destination address
     (i32.const 0)                 ;; Source address (our data)
-    (i32.const DATA_SIZE)         ;; Size to copy - will be replaced
+    (i32.const DATA_SIZE)         ;; Size to copy - will be replaced by script
     (memory.copy)                 ;; Copy the data
     
     ;; Now we need to create the arraybuffer layout
@@ -45,7 +96,7 @@ export const WAT_TEMPLATE = `(module
     
     ;; Calculate the total size of our CallResponse
     (i32.const 16)                ;; 16 bytes for alkanes count
-    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced by script
     (i32.add)                     ;; Total size of CallResponse
     
     ;; Allocate memory at position 2048 for our arraybuffer layout
@@ -54,7 +105,7 @@ export const WAT_TEMPLATE = `(module
     
     ;; Store the size of our CallResponse as a 4-byte little-endian u32
     (i32.const 16)                ;; 16 bytes for alkanes count
-    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced by script
     (i32.add)                     ;; Total size of CallResponse
     (i32.store)                   ;; Store at position 2048
     
@@ -64,7 +115,7 @@ export const WAT_TEMPLATE = `(module
     (i32.add)                     ;; Destination address
     (i32.const 1024)              ;; Source address (our CallResponse)
     (i32.const 16)                ;; 16 bytes for alkanes count
-    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced
+    (i32.const DATA_SIZE)         ;; Size of our data - will be replaced by script
     (i32.add)                     ;; Total size to copy
     (memory.copy)                 ;; Copy the data
     
@@ -75,26 +126,7 @@ export const WAT_TEMPLATE = `(module
     (i32.add)                     ;; Add the offset
   )
 )`;
-
-/**
- * Options for generating a container
- */
-export interface ContainerOptions {
-  /**
-   * Optional template to use instead of the default
-   */
-  template?: string;
-}
-
-/**
- * Generate a WAT file with embedded data
- * 
- * @param data The data to embed in the WAT file
- * @param options Options for generating the WAT file
- * @returns The WAT file content as a string
- */
-export function generateWat(data: Uint8Array, options: ContainerOptions = {}): string {
-  const template = options.template || WAT_TEMPLATE;
+  }
   
   // Convert data to hex string
   let hexData = '';
@@ -162,13 +194,18 @@ export async function defaultWat2Wasm(wat: string): Promise<Uint8Array> {
  * @returns Promise that resolves to the WASM binary
  */
 export async function wabtWat2Wasm(wat: string): Promise<Uint8Array> {
+  // Check if we're in a browser environment
+  const isBrowser = typeof window !== 'undefined';
+  
   // Check if wabt is available
-  if (typeof (window as any).wabt === 'undefined') {
+  if (isBrowser && typeof (window as any).wabt === 'undefined') {
+    throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
+  } else if (!isBrowser && typeof (global as any).wabt === 'undefined') {
     throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
   }
   
   // Get the wabt instance
-  const wabt = (window as any).wabt;
+  const wabt = isBrowser ? (window as any).wabt : (global as any).wabt;
   
   // Wait for wabt to be ready
   await wabt.ready;
@@ -206,7 +243,31 @@ export async function generateContainerFromFile(
 }
 
 /**
- * Browser-friendly function to generate a container WASM file from data
+ * Node.js-friendly function to generate a container WASM file
+ * 
+ * @param filePath Path to the file to embed in the WASM
+ * @param wat2wasm Function to convert WAT to WASM
+ * @param options Options for generating the WASM file
+ * @returns Promise that resolves to the WASM file content as a Uint8Array
+ */
+export async function generateContainerFromFilePath(
+  filePath: string,
+  wat2wasm: Wat2Wasm,
+  options: ContainerOptions = {}
+): Promise<Uint8Array> {
+  if (!isNode) {
+    throw new Error('This function is only available in Node.js');
+  }
+  
+  // Read the file
+  const data = fs.readFileSync(filePath);
+  
+  // Generate the WASM
+  return await generateWasm(data, wat2wasm, options);
+}
+
+/**
+ * Generate a container WASM file from data
  * 
  * @param data The data to embed in the WASM
  * @param wat2wasm Function to convert WAT to WASM (defaults to placeholder)

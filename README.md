@@ -34,11 +34,12 @@ The Orbital Collection framework consists of four main components:
 
 ## Components
 
-### Container Alkane (TypeScript)
+### Container Generator (TypeScript)
 
-The container alkane is a TypeScript library that generates minimal WebAssembly containers for storing the base data of the collection. It provides:
+The container generator is a TypeScript library that generates minimal WebAssembly containers for storing the base data of the collection. It provides:
 
 - Browser-compatible container generation
+- Node.js CLI for command-line usage
 - Efficient static data storage
 - Multiple interfaces (browser, TypeScript API, Node.js)
 
@@ -75,6 +76,23 @@ The orbitals-support crate provides traits and utilities for implementing orbita
 - Orbital trait with default implementations
 - Example implementations for developers
 
+## Project Structure
+
+```
+orbital-collection/
+├── alkanes/
+│   ├── collection/             - Collection alkane implementation
+│   ├── collection-child/       - Orbital alkane implementation
+│   ├── orbitals-support/       - Support library for orbital alkanes
+│   └── sale/                   - Sale alkane implementation
+├── container-generator-ts/     - Container generator (TypeScript)
+│   ├── src/                    - Source code
+│   ├── examples/               - Example usage
+│   └── template.wat            - WebAssembly Text Format template
+├── memory-bank/                - Documentation and context
+└── reference/                  - Reference implementations
+```
+
 ## End-to-End Deployment Guide
 
 This guide walks through the complete process of deploying an orbital collection sale using the oyl CLI tool.
@@ -91,12 +109,13 @@ First, generate the container WASM file that will store your base data:
 
 ```bash
 # Using the browser interface
-open alkanes/orbital-container-asm/examples/index.html
+open container-generator-ts/examples/index.html
 # Upload your data file and download the generated container WASM
 
 # OR using the Node.js interface
-cd alkanes/orbital-container-asm
+cd container-generator-ts
 npm install
+npm run build
 node examples/node-example.js /path/to/your/data.file /path/to/output/container.wasm
 ```
 
@@ -184,6 +203,78 @@ The orbital will:
 2. Apply a transform based on its index
 3. Return the transformed data
 
+## Container Generator Usage
+
+### Browser Usage
+
+```html
+<!-- Load wabt.js -->
+<script src="https://cdn.jsdelivr.net/npm/wabt@1.0.32/index.js"></script>
+
+<!-- Load the container generator -->
+<script type="module">
+  import { generateContainerFromFile, wabtWat2Wasm } from './dist/index.js';
+  
+  // Generate a container from a file
+  const fileInput = document.getElementById('fileInput');
+  const file = fileInput.files[0];
+  const wasm = await generateContainerFromFile(file, wabtWat2Wasm);
+  
+  // Download the container
+  const blob = new Blob([wasm], { type: 'application/wasm' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'container.wasm';
+  a.click();
+</script>
+```
+
+### Node.js Usage
+
+```javascript
+const fs = require('fs');
+const wabt = require('wabt');
+const { generateContainerFromData } = require('orbitals-container-generator');
+
+async function generateContainer() {
+  // Read the input file
+  const inputData = fs.readFileSync('input.png');
+  
+  // Initialize wabt
+  const wabtInstance = await wabt.init();
+  
+  // Define the wat2wasm function
+  const wat2wasm = async (wat) => {
+    const module = wabtInstance.parseWat('container.wat', wat);
+    const { buffer } = module.toBinary({});
+    module.destroy();
+    return new Uint8Array(buffer);
+  };
+  
+  // Generate the container
+  const wasm = await generateContainerFromData(
+    new Uint8Array(inputData),
+    wat2wasm
+  );
+  
+  // Write the output file
+  fs.writeFileSync('container.wasm', Buffer.from(wasm));
+}
+
+generateContainer();
+```
+
+### CLI Usage
+
+```bash
+# Install the package
+npm install -g orbitals-container-generator
+
+# Generate a container
+orbitals-container-generate generate input.png -o container.wasm
+```
+
 ## Custom Transforms
 
 To create a custom transform for your orbitals, implement the BytesTransform trait:
@@ -237,7 +328,7 @@ impl Orbital for CustomOrbital {
 1. Build the TypeScript library:
 
 ```bash
-cd alkanes/orbital-container-asm
+cd container-generator-ts
 npm install
 npm run build
 ```
