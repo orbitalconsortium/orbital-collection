@@ -1,9 +1,9 @@
 (module
-  ;; Memory declaration
-  (memory (export "memory") 1)
-
   ;; Import the abort function
   (import "env" "abort" (func $abort (param i32 i32 i32 i32)))
+
+  ;; Memory declaration
+  (memory (export "memory") 1)
 
   ;; Define our data section - this will be replaced by our script
   (data (i32.const 0) "DATA_PLACEHOLDER")

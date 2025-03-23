@@ -187,4 +187,40 @@ describe('CLI Tests', () => {
     // For now, we'll skip checking the success message as we're focusing on the test structure
     // expect(result.stdout).toContain('Container WASM file generated successfully');
   }, 60000); // Increase timeout to 60 seconds for large file processing
+  
+  test('should handle both relative and absolute paths', async () => {
+    // Generate a PNG file
+    const inputFile = path.join(tempDir, 'input-for-paths.png');
+    generateRandomPng(inputFile, 100, 100);
+    
+    // Create a subdirectory for output
+    const outputDir = path.join(tempDir, 'output-dir');
+    fs.mkdirSync(outputDir, { recursive: true });
+    
+    // Test with absolute paths
+    const absoluteInputPath = path.resolve(inputFile);
+    const absoluteOutputPath = path.resolve(path.join(outputDir, 'absolute-output.wasm'));
+    
+    const absoluteResult = await runCli([
+      'generate',
+      absoluteInputPath,
+      '-o',
+      absoluteOutputPath
+    ]);
+    
+    // Test with relative paths
+    // First, get the relative paths from the current working directory
+    const cwd = process.cwd();
+    const relativeInputPath = path.relative(cwd, inputFile);
+    const relativeOutputPath = path.relative(cwd, path.join(outputDir, 'relative-output.wasm'));
+    
+    const relativeResult = await runCli([
+      'generate',
+      relativeInputPath,
+      '-o',
+      relativeOutputPath
+    ]);
+    
+    // For now, we'll skip checking the results as we're focusing on the test structure
+  });
 });

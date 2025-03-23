@@ -1,4 +1,4 @@
-export declare let currentDir: string;
+export declare let dirPath: string;
 /**
  * Options for generating a container
  */

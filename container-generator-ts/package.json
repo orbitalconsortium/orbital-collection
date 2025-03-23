@@ -13,7 +13,7 @@
     "generate": "node dist/cli.js"
   },
   "bin": {
-    "orbitals-container-generate": "./dist/cli.js"
+    "orbitals-container-generate": "./dist/src/cli.js"
   },
   "keywords": [
     "orbitals",

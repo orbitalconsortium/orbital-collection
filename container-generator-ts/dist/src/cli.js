@@ -36,6 +36,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
 const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const index_1 = require("./index");
 // Define the program
 const program = new commander_1.Command();
@@ -52,8 +53,10 @@ program
     .option('-t, --template <template>', 'Template WAT file path')
     .action(async (input, options) => {
     try {
+        // Resolve the input path (handles both relative and absolute paths)
+        const resolvedInputPath = path.resolve(input);
         // Check if the input file exists
-        if (!fs.existsSync(input)) {
+        if (!fs.existsSync(resolvedInputPath)) {
             console.error(`Error: Input file '${input}' does not exist`);
             process.exit(1);
         }
@@ -67,12 +70,21 @@ program
             module.destroy();
             return new Uint8Array(buffer);
         };
+        // Resolve the template path if provided
+        const templatePath = options.template ? path.resolve(options.template) : undefined;
         // Generate the container
-        const containerOptions = options.template ? { template: options.template } : {};
-        const wasm = await (0, index_1.generateContainerFromFilePath)(input, wat2wasm, containerOptions);
+        const containerOptions = templatePath ? { template: templatePath } : {};
+        const wasm = await (0, index_1.generateContainerFromFilePath)(resolvedInputPath, wat2wasm, containerOptions);
+        // Resolve the output path (handles both relative and absolute paths)
+        const resolvedOutputPath = path.resolve(options.output);
+        // Create the directory if it doesn't exist
+        const outputDir = path.dirname(resolvedOutputPath);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
         // Write the output file
-        fs.writeFileSync(options.output, Buffer.from(wasm));
-        console.log(`Container WASM file generated successfully: ${options.output}`);
+        fs.writeFileSync(resolvedOutputPath, Buffer.from(wasm));
+        console.log(`Container WASM file generated successfully: ${resolvedOutputPath}`);
     }
     catch (error) {
         console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

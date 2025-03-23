@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateContainerFromFilePath, Wat2Wasm, currentDir } from './index';
+import { generateContainerFromFilePath, Wat2Wasm, dirPath } from './index';
 
 // Define the program
 const program = new Command();
@@ -21,8 +21,11 @@ program
   .option('-t, --template <template>', 'Template WAT file path')
   .action(async (input: string, options: { output: string; template?: string }) => {
     try {
+      // Resolve the input path (handles both relative and absolute paths)
+      const resolvedInputPath = path.resolve(input);
+      
       // Check if the input file exists
-      if (!fs.existsSync(input)) {
+      if (!fs.existsSync(resolvedInputPath)) {
         console.error(`Error: Input file '${input}' does not exist`);
         process.exit(1);
       }
@@ -39,14 +42,26 @@ program
         return new Uint8Array(buffer);
       };
 
+      // Resolve the template path if provided
+      const templatePath = options.template ? path.resolve(options.template) : undefined;
+      
       // Generate the container
-      const containerOptions = options.template ? { template: options.template } : {};
-      const wasm = await generateContainerFromFilePath(input, wat2wasm, containerOptions);
+      const containerOptions = templatePath ? { template: templatePath } : {};
+      const wasm = await generateContainerFromFilePath(resolvedInputPath, wat2wasm, containerOptions);
 
+      // Resolve the output path (handles both relative and absolute paths)
+      const resolvedOutputPath = path.resolve(options.output);
+      
+      // Create the directory if it doesn't exist
+      const outputDir = path.dirname(resolvedOutputPath);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      
       // Write the output file
-      fs.writeFileSync(options.output, Buffer.from(wasm));
+      fs.writeFileSync(resolvedOutputPath, Buffer.from(wasm));
 
-      console.log(`Container WASM file generated successfully: ${options.output}`);
+      console.log(`Container WASM file generated successfully: ${resolvedOutputPath}`);
     } catch (error: unknown) {
       console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
