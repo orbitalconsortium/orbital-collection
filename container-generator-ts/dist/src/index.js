@@ -1,61 +1,57 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.currentDir = void 0;
+exports.generateWat = generateWat;
+exports.generateWasm = generateWasm;
+exports.defaultWat2Wasm = defaultWat2Wasm;
+exports.wabtWat2Wasm = wabtWat2Wasm;
+exports.generateContainerFromFile = generateContainerFromFile;
+exports.generateContainerFromFilePath = generateContainerFromFilePath;
+exports.generateContainerFromData = generateContainerFromData;
 // Browser version
-let fs: any;
-let path: any;
+let fs;
+let path;
 // Use a different name to avoid conflicts
-export let currentDir: string = '';
+exports.currentDir = '';
 let isNode = false;
-
 // Check if we're in a Node.js environment
 try {
-  // These imports will only work in Node.js
-  fs = require('fs');
-  path = require('path');
-  // Use the global __dirname if available
-  currentDir = typeof __dirname !== 'undefined' ? __dirname : '';
-  isNode = true;
-} catch (e) {
-  // We're in a browser environment
-  isNode = false;
+    // These imports will only work in Node.js
+    fs = require('fs');
+    path = require('path');
+    // Use the global __dirname if available
+    exports.currentDir = typeof __dirname !== 'undefined' ? __dirname : '';
+    isNode = true;
 }
-
-/**
- * Options for generating a container
- */
-export interface ContainerOptions {
-  /**
-   * Optional template to use instead of the default
-   */
-  template?: string;
-  
-  /**
-   * Optional template content to use instead of loading from a file
-   */
-  templateContent?: string;
+catch (e) {
+    // We're in a browser environment
+    isNode = false;
 }
-
 /**
  * Generate a WAT file with embedded data
- * 
+ *
  * @param data The data to embed in the WAT file
  * @param options Options for generating the WAT file
  * @returns The WAT file content as a string
  */
-export function generateWat(data: Uint8Array, options: ContainerOptions = {}): string {
-  // Get the template content
-  let template = '';
-  
-  if (options.templateContent) {
-    // Use the provided template content
-    template = options.templateContent;
-  } else if (isNode && options.template) {
-    // In Node.js, read the template from a file
-    template = fs.readFileSync(options.template, 'utf-8');
-  } else if (isNode) {
-    // In Node.js, read the default template
-    template = fs.readFileSync(path.join(currentDir, '..', 'template.wat'), 'utf-8');
-  } else {
-    // In the browser, use the default template from the global variable
-    template = `(module
+function generateWat(data, options = {}) {
+    // Get the template content
+    let template = '';
+    if (options.templateContent) {
+        // Use the provided template content
+        template = options.templateContent;
+    }
+    else if (isNode && options.template) {
+        // In Node.js, read the template from a file
+        template = fs.readFileSync(options.template, 'utf-8');
+    }
+    else if (isNode) {
+        // In Node.js, read the default template
+        template = fs.readFileSync(path.join(exports.currentDir, '..', 'template.wat'), 'utf-8');
+    }
+    else {
+        // In the browser, use the default template from the global variable
+        template = `(module
   ;; Memory declaration
   (memory (export "memory") 1)
 
@@ -128,185 +124,140 @@ export function generateWat(data: Uint8Array, options: ContainerOptions = {}): s
     (i32.add)                     ;; Add the offset
   )
 )`;
-  }
-  
-  // Convert data to hex string
-  let hexData = '';
-  for (let i = 0; i < data.length; i++) {
-    const byte = data[i].toString(16).padStart(2, '0');
-    hexData += `\\${byte}`;
-  }
-  
-  // Replace placeholders in the template
-  return template
-    .replace('DATA_PLACEHOLDER', hexData)
-    .replace(/DATA_SIZE/g, data.length.toString());
+    }
+    // Convert data to hex string
+    let hexData = '';
+    for (let i = 0; i < data.length; i++) {
+        const byte = data[i].toString(16).padStart(2, '0');
+        hexData += `\\${byte}`;
+    }
+    // Replace placeholders in the template
+    return template
+        .replace('DATA_PLACEHOLDER', hexData)
+        .replace(/DATA_SIZE/g, data.length.toString());
 }
-
-/**
- * Interface for the wat2wasm function
- */
-export interface Wat2Wasm {
-  (wat: string): Promise<Uint8Array>;
-}
-
 /**
  * Generate a WASM file with embedded data
- * 
+ *
  * @param data The data to embed in the WASM file
  * @param wat2wasm Function to convert WAT to WASM
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-export async function generateWasm(
-  data: Uint8Array,
-  wat2wasm: Wat2Wasm,
-  options: ContainerOptions = {}
-): Promise<Uint8Array> {
-  // Generate the WAT file
-  const wat = generateWat(data, options);
-  
-  // Convert WAT to WASM using the provided function
-  return await wat2wasm(wat);
+async function generateWasm(data, wat2wasm, options = {}) {
+    // Generate the WAT file
+    const wat = generateWat(data, options);
+    // Convert WAT to WASM using the provided function
+    return await wat2wasm(wat);
 }
-
 /**
  * Default implementation of wat2wasm using WebAssembly.validate
  * This is a placeholder that doesn't actually convert WAT to WASM
  * In a real implementation, you would use a library like wabt.js
- * 
+ *
  * @param wat WAT code to convert
  * @returns Promise that resolves to a placeholder Uint8Array
  */
-export async function defaultWat2Wasm(wat: string): Promise<Uint8Array> {
-  // This is a placeholder implementation
-  // In a real implementation, you would use a library like wabt.js
-  console.warn('Using placeholder wat2wasm implementation. The generated WASM will not be valid.');
-  
-  // Return a placeholder Uint8Array
-  const encoder = new TextEncoder();
-  return encoder.encode('Placeholder WASM binary');
+async function defaultWat2Wasm(wat) {
+    // This is a placeholder implementation
+    // In a real implementation, you would use a library like wabt.js
+    console.warn('Using placeholder wat2wasm implementation. The generated WASM will not be valid.');
+    // Return a placeholder Uint8Array
+    const encoder = new TextEncoder();
+    return encoder.encode('Placeholder WASM binary');
 }
-
 /**
  * Implementation of wat2wasm using wabt.js
  * This requires the wabt.js library to be loaded
- * 
+ *
  * @param wat WAT code to convert
  * @returns Promise that resolves to the WASM binary
  */
-export async function wabtWat2Wasm(wat: string): Promise<Uint8Array> {
-  // Check if we're in a browser environment
-  const isBrowser = typeof window !== 'undefined';
-  
-  // Check if wabt is available
-  if (isBrowser && typeof (window as any).wabt === 'undefined') {
-    throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
-  } else if (!isBrowser && typeof (global as any).wabt === 'undefined') {
-    throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
-  }
-  
-  // Get the wabt instance
-  const wabt = isBrowser ? (window as any).wabt : (global as any).wabt;
-  
-  // Wait for wabt to be ready
-  await wabt.ready;
-  
-  // Parse the WAT code
-  const module = wabt.parseWat('container.wat', wat);
-  
-  // Convert to binary
-  const { buffer } = module.toBinary({});
-  
-  // Clean up
-  module.destroy();
-  
-  return new Uint8Array(buffer);
+async function wabtWat2Wasm(wat) {
+    // Check if we're in a browser environment
+    const isBrowser = typeof window !== 'undefined';
+    // Check if wabt is available
+    if (isBrowser && typeof window.wabt === 'undefined') {
+        throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
+    }
+    else if (!isBrowser && typeof global.wabt === 'undefined') {
+        throw new Error('wabt.js is not loaded. Please load wabt.js before calling this function.');
+    }
+    // Get the wabt instance
+    const wabt = isBrowser ? window.wabt : global.wabt;
+    // Wait for wabt to be ready
+    await wabt.ready;
+    // Parse the WAT code
+    const module = wabt.parseWat('container.wat', wat);
+    // Convert to binary
+    const { buffer } = module.toBinary({});
+    // Clean up
+    module.destroy();
+    return new Uint8Array(buffer);
 }
-
 /**
  * Browser-friendly function to generate a container WASM file
- * 
+ *
  * @param file File object to embed in the WASM
  * @param wat2wasm Function to convert WAT to WASM (defaults to placeholder)
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-export async function generateContainerFromFile(
-  file: File,
-  wat2wasm: Wat2Wasm = defaultWat2Wasm,
-  options: ContainerOptions = {}
-): Promise<Uint8Array> {
-  // Read the file
-  const data = await readFileAsArrayBuffer(file);
-  
-  // Generate the WASM
-  return await generateWasm(new Uint8Array(data), wat2wasm, options);
+async function generateContainerFromFile(file, wat2wasm = defaultWat2Wasm, options = {}) {
+    // Read the file
+    const data = await readFileAsArrayBuffer(file);
+    // Generate the WASM
+    return await generateWasm(new Uint8Array(data), wat2wasm, options);
 }
-
 /**
  * Node.js-friendly function to generate a container WASM file
- * 
+ *
  * @param filePath Path to the file to embed in the WASM
  * @param wat2wasm Function to convert WAT to WASM
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-export async function generateContainerFromFilePath(
-  filePath: string,
-  wat2wasm: Wat2Wasm,
-  options: ContainerOptions = {}
-): Promise<Uint8Array> {
-  if (!isNode) {
-    throw new Error('This function is only available in Node.js');
-  }
-  
-  // Read the file
-  const data = fs.readFileSync(filePath);
-  
-  // Generate the WASM
-  return await generateWasm(data, wat2wasm, options);
+async function generateContainerFromFilePath(filePath, wat2wasm, options = {}) {
+    if (!isNode) {
+        throw new Error('This function is only available in Node.js');
+    }
+    // Read the file
+    const data = fs.readFileSync(filePath);
+    // Generate the WASM
+    return await generateWasm(data, wat2wasm, options);
 }
-
 /**
  * Generate a container WASM file from data
- * 
+ *
  * @param data The data to embed in the WASM
  * @param wat2wasm Function to convert WAT to WASM (defaults to placeholder)
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-export async function generateContainerFromData(
-  data: Uint8Array,
-  wat2wasm: Wat2Wasm = defaultWat2Wasm,
-  options: ContainerOptions = {}
-): Promise<Uint8Array> {
-  // Generate the WASM
-  return await generateWasm(data, wat2wasm, options);
+async function generateContainerFromData(data, wat2wasm = defaultWat2Wasm, options = {}) {
+    // Generate the WASM
+    return await generateWasm(data, wat2wasm, options);
 }
-
 /**
  * Helper function to read a file as an ArrayBuffer
- * 
+ *
  * @param file File to read
  * @returns Promise that resolves to the file content as an ArrayBuffer
  */
-function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(reader.result);
-      } else {
-        reject(new Error('Failed to read file as ArrayBuffer'));
-      }
-    };
-    
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-    
-    reader.readAsArrayBuffer(file);
-  });
+function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (reader.result instanceof ArrayBuffer) {
+                resolve(reader.result);
+            }
+            else {
+                reject(new Error('Failed to read file as ArrayBuffer'));
+            }
+        };
+        reader.onerror = () => {
+            reject(new Error('Failed to read file'));
+        };
+        reader.readAsArrayBuffer(file);
+    });
 }

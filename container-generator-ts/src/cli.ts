@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateContainerFromFilePath, Wat2Wasm } from './index';
+import { generateContainerFromFilePath, Wat2Wasm, currentDir } from './index';
 
 // Define the program
 const program = new Command();
