@@ -1,7 +1,7 @@
 # System Patterns
 
 ## Architecture Overview
-The orbital-collection project implements a collection system using the alkane framework. The architecture follows a factory pattern with four main components and a support library:
+The orbital-collection project implements a collection system using the alkane framework. The architecture follows a factory pattern with four main components and two support libraries:
 
 ```
 orbital-collection
@@ -9,7 +9,8 @@ orbital-collection
 ├── Orbital Alkane (Instances)
 ├── Container Alkane (Data Storage)
 ├── Sale Alkane (Payment Processing)
-└── Orbitals Support (Traits and Utilities)
+├── Orbitals Support (Traits and Utilities)
+└── Orbital Macros (Specialized Macros)
 ```
 
 ## Key Components
@@ -59,6 +60,14 @@ A support library that:
 - Provides the Orbital trait with default implementations
 - Includes example implementations for custom transforms
 - Offers documentation for custom transform implementation
+
+### Orbital Macros
+A specialized macro library that:
+- Provides the declare_orbital! macro for orbital alkanes
+- Implements the OrbitalMessage derive macro
+- Generates the WebAssembly interface for orbital alkanes
+- Handles MessageDispatch trait implementation
+- Maintains compatibility with the enum-based opcode pattern
 
 ## Design Patterns
 
@@ -116,6 +125,15 @@ The sale alkane implements a payment processing pattern:
 - Provides change for excess payment
 - Supports bulk purchasing of multiple orbitals
 
+### Macro Pattern
+The orbital-macros crate implements specialized macros for orbital alkanes:
+- The declare_orbital! macro generates WebAssembly interface functions
+- The OrbitalMessage derive macro implements the MessageDispatch trait
+- Macros maintain the enum-based opcode definition pattern
+- Macros handle the boilerplate code for WebAssembly integration
+- Macros ensure proper compatibility with the alkanes framework
+- Macros provide a clean and consistent API for orbital alkanes
+
 ## Component Relationships
 
 ### Collection to Orbital Relationship
@@ -136,6 +154,13 @@ The sale alkane implements a payment processing pattern:
 - The orbital uses the BytesTransform trait for data transformations
 - The orbital can use custom transform implementations
 - The orbitals-support crate provides default implementations
+
+### Orbital to Orbital Macros Relationship
+- The orbital alkane uses the declare_orbital! macro for WebAssembly interface
+- The orbital defines an OrbitalMessage enum with the OrbitalMessage derive macro
+- The OrbitalMessage derive macro implements the MessageDispatch trait
+- The orbital-macros crate handles the boilerplate code for WebAssembly integration
+- The macros maintain compatibility with the alkanes framework
 
 ### Data Flow
 1. User requests data from an orbital instance (opcode 1000)
@@ -174,8 +199,9 @@ The sale alkane implements a payment processing pattern:
 - The sale alkane implements opcode 77 for purchasing
 - The collection alkane implements opcode 102 for orbital count
 - The sale alkane implements opcode 104 for terms of service
-- The MessageDispatch derive macro is used for clean opcode handling
-- The declare_alkane! macro is used for proper runtime integration
+- The MessageDispatch trait is implemented via the OrbitalMessage derive macro
+- The declare_orbital! macro is used for orbital alkane runtime integration
+- The declare_alkane! macro is used for other alkanes' runtime integration
 
 ### Deployment Pattern
 - The container WASM is attached to the collection deployment

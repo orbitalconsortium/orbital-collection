@@ -18,6 +18,11 @@ The current focus is on optimizing and enhancing the orbital-collection system w
   - Implemented BytesTransform trait for data transformations
   - Implemented Orbital trait with default implementations
   - Added example implementations for custom transforms
+- **Orbital Macros Crate**: Created a new crate for orbital-specific macros
+  - Implemented declare_orbital! macro for orbital alkanes
+  - Created OrbitalMessage derive macro for MessageDispatch implementation
+  - Fixed compatibility issues with the MessageDispatch trait
+  - Ensured proper WebAssembly interface generation
 - **Special Call Function**: Implemented a special call function for container initialization
   - Avoids fuel costs for large response bodies
   - Uses __call host function directly without __returndatacopy
@@ -27,8 +32,13 @@ The current focus is on optimizing and enhancing the orbital-collection system w
   - orbitals-orbital-contract (formerly alkanes-collection-child)
   - orbitals-container-generator (formerly orbital-container-asm)
   - orbitals-sale-contract (formerly alkanes-sale)
+  - orbital-macros (new crate for orbital-specific macros)
 - **Project Structure**: Set up the monorepo structure with workspace configuration
 - **Documentation**: Updated Memory Bank files and created README.md
+- **Build Fixes**: Fixed all build errors and warnings
+  - Resolved MessageDispatch trait implementation issues
+  - Fixed unused imports and variables
+  - Implemented missing methods in the sale alkane
 
 ## Active Decisions
 
@@ -50,12 +60,22 @@ The current focus is on optimizing and enhancing the orbital-collection system w
 - Made name and symbol display the collection's name/symbol with superscript index
 - Added proxy functionality for Data opcode with transform application
 - Stored collection reference and index for proper operation
+- Created custom orbital-macros crate for specialized macro functionality
+
+### Orbital Macros Implementation
+- Created a dedicated orbital-macros crate for orbital-specific macros
+- Implemented declare_orbital! macro as an alternative to declare_alkane!
+- Created OrbitalMessage derive macro for MessageDispatch implementation
+- Ensured proper WebAssembly interface generation
+- Fixed compatibility issues with the MessageDispatch trait
+- Maintained the same enum-based opcode definition pattern
 
 ### Sale Alkane Implementation
 - Implemented payment verification and change calculation
 - Added bulk purchasing capability
 - Included terms of service for legal protection
 - Used proper parameter types (u128 values for AlkaneId components)
+- Added fuel method for call operations
 
 ### Deployment Process
 - Documented the correct deployment process using the oyl CLI tool

@@ -6,11 +6,10 @@ use alkanes_runtime::{
     stdio::{stdout, Write},
 };
 use alkanes_runtime::{runtime::AlkaneResponder, storage::StoragePointer, token::Token};
-use alkanes_support::{parcel::AlkaneTransfer, response::CallResponse};
+use alkanes_support::response::CallResponse;
 use anyhow::{anyhow, Result};
 use metashrew_support::compat::{to_arraybuffer_layout, to_passback_ptr};
 use metashrew_support::index_pointer::KeyValuePointer;
-use alkanes_support::context::Context;
 use alkanes_support::utils::overflow_error;
 use alkanes_support::id::AlkaneId;
 use alkanes_support::parcel::AlkaneTransferParcel;
@@ -165,6 +164,12 @@ impl Collection {
         0
     }
 
+    /// Get the fuel amount for calls
+    pub fn fuel(&self) -> u64 {
+        // Default fuel value
+        1000000
+    }
+
     /// Get the orbital template ID
     pub fn orbital_template(&self) -> u128 {
         // Return the constant template ID
@@ -211,9 +216,9 @@ impl Collection {
         let mut bytes = Vec::with_capacity(32);
         bytes.extend_from_slice(&instance_id.block.to_le_bytes());
         bytes.extend_from_slice(&instance_id.tx.to_le_bytes());
-        
         // Store the instance ID with its sequence number
-        let mut instance_pointer = self.instances_pointer().select(&new_count.to_le_bytes());
+        let bytes_vec = new_count.to_le_bytes().to_vec();
+        let mut instance_pointer = self.instances_pointer().select(&bytes_vec);
         instance_pointer.set(Arc::new(bytes));
         
         // Update the count
@@ -224,7 +229,8 @@ impl Collection {
 
     /// Get an instance by sequence number
     pub fn get_instance(&self, sequence: u128) -> Option<AlkaneId> {
-        let instance_pointer = self.instances_pointer().select(&sequence.to_le_bytes());
+        let bytes_vec = sequence.to_le_bytes().to_vec();
+        let instance_pointer = self.instances_pointer().select(&bytes_vec);
         let instance = instance_pointer.get();
         if instance.len() > 0 {
             let bytes = instance.as_ref();
@@ -238,7 +244,7 @@ impl Collection {
     }
 
     /// Check if an alkane ID is authorized to create orbitals
-    pub fn is_authorized(&self, alkane_id: &AlkaneId) -> bool {
+    pub fn is_authorized(&self, _alkane_id: &AlkaneId) -> bool {
         // In a real implementation, we would check against a list of authorized alkanes
         // For now, we'll just return true for simplicity
         // TODO: Implement proper authorization
@@ -258,14 +264,12 @@ impl Collection {
         let mut storage_map_buffer = to_arraybuffer_layout::<&[u8]>(&alkanes_runtime::runtime::get_cache().serialize());
         
         // Call the __call host function directly
-        let call_result = unsafe {
-            __call(
-                to_passback_ptr(&mut cellpack_buffer),
-                to_passback_ptr(&mut outgoing_alkanes_buffer),
-                to_passback_ptr(&mut storage_map_buffer),
-                fuel,
-            )
-        };
+        let call_result = __call(
+            to_passback_ptr(&mut cellpack_buffer),
+            to_passback_ptr(&mut outgoing_alkanes_buffer),
+            to_passback_ptr(&mut storage_map_buffer),
+            fuel,
+        );
         
         // Check the result but don't process the return data
         match call_result {
@@ -288,7 +292,7 @@ impl Collection {
     /// Initialize the collection
     fn initialize(&self, name_part1: u128, name_part2: u128, symbol: u128) -> Result<CallResponse> {
         let context = self.context()?;
-        let mut response = CallResponse::forward(&context.incoming_alkanes);
+        let response = CallResponse::forward(&context.incoming_alkanes);
 
         // Prevent multiple initializations
         self.observe_initialization()?;
@@ -301,19 +305,25 @@ impl Collection {
         self.set_instances_count(0);
 
         // Get the sequence number for the container
-        let container_sequence = self.sequence()?;
+        let container_sequence = match self.context() {
+            Ok(context) => context.myself.tx,
+            Err(_) => 0, // This should never happen
+        };
 
         // Deploy the container using [1, 0] cellpack target with [0] opcode
         // Use the special call function that doesn't use __returndatacopy
         let container_cellpack = Cellpack {
-            block: 1,
-            tx: 0,
+            target: AlkaneId {
+                block: 1,
+                tx: 0,
+            },
+            inputs: vec![],
         };
         
         self.call_without_returndata(
             &container_cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            self.fuel()
         )?;
 
         // Store the container sequence number
@@ -333,22 +343,28 @@ impl Collection {
         }
 
         // Get the next sequence number
-        let sequence = self.sequence()?;
+        let sequence = match self.context() {
+            Ok(context) => context.myself.tx,
+            Err(_) => 0, // This should never happen
+        };
 
         // Get the next index (0-based)
         let index = self.instances_count();
 
         // Factory up the orbital using [6, self.orbital_template()] cellpack
         let orbital_cellpack = Cellpack {
-            block: 6,
-            tx: self.orbital_template(),
+            target: AlkaneId {
+                block: 6,
+                tx: self.orbital_template(),
+            },
             inputs: vec![0, index], // Initialize opcode with index
         };
         
-        let orbital_call_response = self.call(
+        // Call the orbital template but ignore the response
+        let _orbital_call_response = self.call(
             &orbital_cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            self.fuel()
         )?;
         
         // Extract the orbital instance ID from the response
@@ -435,7 +451,7 @@ impl Collection {
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            self.fuel()
         )?;
         
         // Pass the bytes with NO transform to the caller

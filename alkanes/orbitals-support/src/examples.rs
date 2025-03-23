@@ -5,7 +5,7 @@ use crate::BytesTransform;
 pub struct ExampleImageTransform;
 
 impl BytesTransform for ExampleImageTransform {
-    fn transform(&self, input: &[u8], index: u128, sequence: u128) -> Vec<u8> {
+    fn transform(&self, input: &[u8], _index: u128, _sequence: u128) -> Vec<u8> {
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Parse the input bytes as an image (e.g., using the image crate)
@@ -43,7 +43,7 @@ impl BytesTransform for ExampleImageTransform {
 pub struct ColorFilterTransform;
 
 impl BytesTransform for ColorFilterTransform {
-    fn transform(&self, input: &[u8], index: u128, _sequence: u128) -> Vec<u8> {
+    fn transform(&self, input: &[u8], _index: u128, _sequence: u128) -> Vec<u8> {
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Parse the input bytes as an image
@@ -89,7 +89,7 @@ impl BytesTransform for ColorFilterTransform {
 pub struct PatternTransform;
 
 impl BytesTransform for PatternTransform {
-    fn transform(&self, input: &[u8], index: u128, sequence: u128) -> Vec<u8> {
+    fn transform(&self, input: &[u8], _index: u128, _sequence: u128) -> Vec<u8> {
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Parse the input bytes as an image

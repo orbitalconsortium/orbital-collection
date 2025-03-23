@@ -4,13 +4,13 @@ use alkanes_runtime::{runtime::AlkaneResponder, token::Token};
 use alkanes_support::{parcel::AlkaneTransfer, response::CallResponse};
 use anyhow::{anyhow, Result};
 use crate::{Orbital, BytesTransform};
-use std::sync::Arc;
+use metashrew_support::compat::to_arraybuffer_layout;
 
 /// Example of a custom transform that could be used with image libraries
 pub struct CustomImageTransform;
 
 impl BytesTransform for CustomImageTransform {
-    fn transform(&self, input: &[u8], index: u128, sequence: u128) -> Vec<u8> {
+    fn transform(&self, input: &[u8], _index: u128, _sequence: u128) -> Vec<u8> {
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Parse the input bytes as an image (e.g., using the image crate)

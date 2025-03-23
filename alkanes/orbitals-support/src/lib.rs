@@ -1,6 +1,7 @@
 use alkanes_runtime::{runtime::AlkaneResponder, storage::StoragePointer, token::Token};
 use alkanes_support::{parcel::AlkaneTransferParcel, response::CallResponse, id::AlkaneId, cellpack::Cellpack};
 use anyhow::{anyhow, Result};
+use metashrew_support::index_pointer::KeyValuePointer;
 use std::sync::Arc;
 
 // Example implementations of BytesTransform
@@ -81,6 +82,12 @@ pub trait Orbital: AlkaneResponder + Token {
         }
     }
 
+    /// Get fuel amount for calls
+    fn fuel(&self) -> u64 {
+        // Default fuel value
+        <Self as AlkaneResponder>::fuel(&self)
+    }
+
     /// Get the collection's name using staticcall
     fn get_collection_name(&self) -> Result<String> {
         // Create a cellpack to call the collection's GetName opcode
@@ -93,7 +100,7 @@ pub trait Orbital: AlkaneResponder + Token {
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            Orbital::fuel(self)
         )?;
         
         // Convert the response data to a string
@@ -112,7 +119,7 @@ pub trait Orbital: AlkaneResponder + Token {
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            Orbital::fuel(self)
         )?;
         
         // Convert the response data to a string
@@ -190,14 +197,14 @@ pub trait Orbital: AlkaneResponder + Token {
         // Create a cellpack to call the collection's GetData opcode
         let cellpack = Cellpack {
             target: collection_id,
-            inputs: vec![1000, self.sequence()], // GetData opcode with sequence number
+            inputs: vec![1000, Orbital::sequence(self)], // GetData opcode with sequence number
         };
         
         // Call the collection's GetData opcode
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()?
+            Orbital::fuel(self)
         )?;
         
         // Get the transform
@@ -207,7 +214,7 @@ pub trait Orbital: AlkaneResponder + Token {
         let transformed_data = transform.transform(
             &call_response.data,
             self.index(),
-            self.sequence()
+            Orbital::sequence(self)
         );
         
         // Return the transformed data

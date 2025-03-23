@@ -1,50 +1,19 @@
-use alkanes_runtime::declare_alkane;
-use alkanes_runtime::message::MessageDispatch;
 #[allow(unused_imports)]
 use alkanes_runtime::{
     println,
     stdio::{stdout, Write},
 };
-use alkanes_runtime::{runtime::AlkaneResponder, token::Token};
+use alkanes_runtime::{runtime::AlkaneResponder, token::Token, message::MessageDispatch};
 use alkanes_support::{parcel::AlkaneTransfer, response::CallResponse};
 use anyhow::{anyhow, Result};
-use metashrew_support::compat::{to_arraybuffer_layout, to_passback_ptr};
+use metashrew_support::compat::to_arraybuffer_layout;
 use orbitals_support::{Orbital, BytesTransform, IdentityTransform};
-use std::sync::Arc;
+use orbital_macros::{declare_orbital, OrbitalMessage};
 
 /// Orbital alkane that represents an instance of the collection
 #[derive(Default)]
 pub struct OrbitalInstance(());
 
-#[derive(MessageDispatch)]
-enum OrbitalMessage {
-    /// Initialize the orbital with its index in the collection
-    #[opcode(0)]
-    Initialize {
-        /// Index in the collection (0-based)
-        index: u128,
-    },
-
-    /// Get the name of the orbital
-    #[opcode(99)]
-    #[returns(String)]
-    GetName,
-
-    /// Get the symbol of the orbital
-    #[opcode(100)]
-    #[returns(String)]
-    GetSymbol,
-
-    /// Get the total supply of the orbital
-    #[opcode(101)]
-    #[returns(u128)]
-    GetTotalSupply,
-
-    /// Get the data of the orbital (proxies to collection with transform)
-    #[opcode(1000)]
-    #[returns(Vec<u8>)]
-    GetData,
-}
 
 impl Token for OrbitalInstance {
     fn name(&self) -> String {
@@ -126,19 +95,48 @@ impl OrbitalInstance {
     }
 }
 
+
+#[derive(OrbitalMessage)]
+enum OrbitalMessage {
+    /// Initialize the orbital with its index in the collection
+    #[opcode(0)]
+    Initialize {
+        /// Index in the collection (0-based)
+        index: u128,
+    },
+
+    /// Get the name of the orbital
+    #[opcode(99)]
+    #[returns(String)]
+    GetName,
+
+    /// Get the symbol of the orbital
+    #[opcode(100)]
+    #[returns(String)]
+    GetSymbol,
+
+    /// Get the total supply of the orbital
+    #[opcode(101)]
+    #[returns(u128)]
+    GetTotalSupply,
+
+    /// Get the data of the orbital (proxies to collection with transform)
+    #[opcode(1000)]
+    #[returns(Vec<u8>)]
+    GetData,
+}
+
 impl AlkaneResponder for OrbitalInstance {
     fn execute(&self) -> Result<CallResponse> {
-        // The opcode extraction and dispatch logic is now handled by the declare_alkane macro
-        // This method is still required by the AlkaneResponder trait, but we can just return an error
-        // indicating that it should not be called directly
+        // This method should not be called directly when using declare_orbital
         Err(anyhow!(
-            "This method should not be called directly. Use the declare_alkane macro instead."
+            "This method should not be called directly. Use the declare_orbital macro instead."
         ))
     }
 }
 
-// Use the new macro format
-declare_alkane! {
+// Use the declare_orbital macro to generate the WebAssembly interface
+declare_orbital! {
     impl AlkaneResponder for OrbitalInstance {
         type Message = OrbitalMessage;
     }

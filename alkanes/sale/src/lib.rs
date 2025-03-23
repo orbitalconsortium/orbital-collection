@@ -5,18 +5,16 @@ use alkanes_runtime::{
     println,
     stdio::{stdout, Write},
 };
-use alkanes_runtime::{runtime::AlkaneResponder, storage::StoragePointer, token::Token};
+use alkanes_runtime::{runtime::AlkaneResponder, storage::StoragePointer};
 use alkanes_support::{parcel::AlkaneTransfer, response::CallResponse};
 use anyhow::{anyhow, Result};
-use metashrew_support::compat::{to_arraybuffer_layout, to_passback_ptr};
+use metashrew_support::compat::to_arraybuffer_layout;
 use metashrew_support::index_pointer::KeyValuePointer;
-use alkanes_support::context::Context;
 use alkanes_support::utils::overflow_error;
 use alkanes_support::id::AlkaneId;
 use alkanes_support::parcel::AlkaneTransferParcel;
 use alkanes_support::cellpack::Cellpack;
 use std::sync::Arc;
-use std::io::Cursor;
 
 /// Sale alkane for selling orbital instances
 #[derive(Default)]
@@ -206,6 +204,12 @@ impl Sale {
             .to_string()
     }
 
+    /// Get the fuel amount for calls
+    pub fn fuel(&self) -> u64 {
+        // Default fuel value
+        1000000
+    }
+
     /// Observe initialization to prevent multiple initializations
     pub fn observe_initialization(&self) -> Result<()> {
         let mut pointer = StoragePointer::from_keyword("/initialized");
@@ -241,7 +245,7 @@ impl Sale {
         limit: u128
     ) -> Result<CallResponse> {
         let context = self.context()?;
-        let mut response = CallResponse::forward(&context.incoming_alkanes);
+        let response = CallResponse::forward(&context.incoming_alkanes);
 
         // Prevent multiple initializations
         self.observe_initialization()?;
@@ -332,7 +336,7 @@ impl Sale {
             let orbital_response = self.call(
                 &cellpack,
                 &AlkaneTransferParcel::default(),
-                self.fuel()?
+                self.fuel()
             )?;
             
             // Extract the orbital instance ID from the response

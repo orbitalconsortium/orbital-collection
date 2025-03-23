@@ -1,11 +1,6 @@
 [workspace]
 members = [
-    "alkanes/collection",
-    "alkanes/collection-child",
-    "alkanes/sale",
-    "alkanes/orbitals-support",
-    "src",
-    "tests",
+    "alkanes/*"
 ]
 
 [workspace.dependencies]

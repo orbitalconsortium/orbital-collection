@@ -16,6 +16,7 @@
   - Sequence number handling
   - Superscript index display in name and symbol
   - Collection name/symbol retrieval
+  - Integration with orbital-macros
 - ✅ Container alkane implementation (orbitals-container-generator)
   - TypeScript library for generating containers
   - WAT template for minimal WASM
@@ -31,11 +32,17 @@
   - Payment verification
   - Bulk purchasing with change calculation
   - Terms of service for legal protection
+  - Fuel method for call operations
 - ✅ Orbitals Support crate (orbitals-support)
   - BytesTransform trait for data transformations
   - Orbital trait with default implementations
   - Example implementations for custom transforms
   - Documentation for custom transform implementation
+- ✅ Orbital Macros crate (orbital-macros)
+  - declare_orbital! macro for orbital alkanes
+  - OrbitalMessage derive macro for MessageDispatch implementation
+  - WebAssembly interface generation
+  - Compatible with the MessageDispatch trait
 - ✅ Deployment instructions
   - Detailed guide for using the oyl CLI tool
   - Correct commands for deploying all components
@@ -52,7 +59,7 @@
 - 🔄 Add deployment scripts for automation
 
 ## Current Status
-The project has been fully implemented with all four main components: collection alkane (orbitals-collection-contract), orbital alkane (orbitals-orbital-contract), container alkane (orbitals-container-generator), and sale alkane (orbitals-sale-contract). We've also created a new orbitals-support crate that provides traits and utilities for implementing orbital alkanes. The basic functionality is working, with a particular focus on the container alkane's efficiency and flexibility. We've reimplemented the container alkane as a TypeScript library that can generate minimal WASM containers directly in the browser.
+The project has been fully implemented with all main components: collection alkane (orbitals-collection-contract), orbital alkane (orbitals-orbital-contract), container alkane (orbitals-container-generator), sale alkane (orbitals-sale-contract), orbitals-support crate, and orbital-macros crate. The basic functionality is working, with a particular focus on the container alkane's efficiency and flexibility. We've reimplemented the container alkane as a TypeScript library that can generate minimal WASM containers directly in the browser. We've also created a custom orbital-macros crate to handle the specific needs of orbital alkanes.
 
 ### Implemented Features
 1. **Collection Alkane (orbitals-collection-contract)**
@@ -71,6 +78,7 @@ The project has been fully implemented with all four main components: collection
    - Superscript index display in name and symbol
    - Collection name/symbol retrieval
    - Implementation of the Orbital trait
+   - Integration with orbital-macros for MessageDispatch
 
 3. **Container Alkane (orbitals-container-generator)**
    - TypeScript library for generating containers
@@ -89,12 +97,20 @@ The project has been fully implemented with all four main components: collection
    - Bulk purchasing with change calculation
    - Terms of service for legal protection
    - Proper parameter types (u128 values for AlkaneId components)
+   - Fuel method for call operations
 
 5. **Orbitals Support Crate (orbitals-support)**
    - BytesTransform trait for data transformations
    - Orbital trait with default implementations
    - Example implementations for custom transforms
    - Documentation for custom transform implementation
+
+6. **Orbital Macros Crate (orbital-macros)**
+   - declare_orbital! macro for orbital alkanes
+   - OrbitalMessage derive macro for MessageDispatch implementation
+   - WebAssembly interface generation
+   - Compatible with the MessageDispatch trait
+   - Support for enum-based opcode definition pattern
 
 ### Implementation Details
 - The orbital-collection project follows a factory pattern
@@ -104,6 +120,8 @@ The project has been fully implemented with all four main components: collection
 - The container alkane is now a TypeScript library that generates minimal WASM containers
 - The sale alkane handles payment processing and instance creation
 - The orbitals-support crate provides traits and utilities for implementing orbital alkanes
+- The orbital-macros crate provides specialized macros for orbital alkanes
+- The MessageDispatch trait is implemented via the OrbitalMessage derive macro
 
 ## Known Issues
 - Transform logic examples need more real-world implementations
@@ -123,11 +141,13 @@ The project has been fully implemented with all four main components: collection
 - None currently identified
 
 ## Recent Achievements
-- Implemented all four main components with proper package names
+- Implemented all main components with proper package names
 - Created the orbitals-support crate with BytesTransform and Orbital traits
+- Created the orbital-macros crate with specialized macros for orbital alkanes
 - Reimplemented the container alkane as a TypeScript library
 - Created browser interface for container generation
 - Implemented special call function for container initialization
+- Fixed all build errors and warnings in the project
 - Added detailed deployment instructions using the oyl CLI tool
 - Updated Memory Bank documentation
 - Created README.md with project overview and deployment guide
