@@ -42,6 +42,8 @@ The container generator is a TypeScript library that generates minimal WebAssemb
 - Node.js CLI for command-line usage
 - Efficient static data storage
 - Multiple interfaces (browser, TypeScript API, Node.js)
+- Support for both relative and absolute file paths
+- Automatic creation of output directories
 
 ### Collection Alkane (Rust)
 
@@ -76,6 +78,14 @@ The orbitals-support crate provides traits and utilities for implementing orbita
 - Orbital trait with default implementations
 - Example implementations for developers
 
+### Orbital Macros (Rust)
+
+The orbital-macros crate provides specialized macros for orbital alkanes. It provides:
+
+- OrbitalMessage derive macro for implementing MessageDispatch
+- declare_orbital! macro for WebAssembly interface generation
+- Support for enum-based opcode definition pattern
+
 ## Project Structure
 
 ```
@@ -83,11 +93,13 @@ orbital-collection/
 ├── alkanes/
 │   ├── collection/             - Collection alkane implementation
 │   ├── collection-child/       - Orbital alkane implementation
+│   ├── orbital-macros/         - Specialized macros for orbital alkanes
 │   ├── orbitals-support/       - Support library for orbital alkanes
 │   └── sale/                   - Sale alkane implementation
 ├── container-generator-ts/     - Container generator (TypeScript)
 │   ├── src/                    - Source code
 │   ├── examples/               - Example usage
+│   ├── test/                   - Test suite
 │   └── template.wat            - WebAssembly Text Format template
 ├── memory-bank/                - Documentation and context
 └── reference/                  - Reference implementations
@@ -112,11 +124,17 @@ First, generate the container WASM file that will store your base data:
 open container-generator-ts/examples/index.html
 # Upload your data file and download the generated container WASM
 
-# OR using the Node.js interface
+# OR using the Node.js CLI
 cd container-generator-ts
 npm install
 npm run build
+node ./dist/src/cli.js generate /path/to/your/data.file -o /path/to/output/container.wasm
+
+# OR using the example script
 node examples/node-example.js /path/to/your/data.file /path/to/output/container.wasm
+
+# You can also use relative paths
+node ./dist/src/cli.js generate ./data/image.png -o ./output/container.wasm
 ```
 
 ### Step 2: Deploy the Collection with Container
@@ -271,8 +289,23 @@ generateContainer();
 # Install the package
 npm install -g orbitals-container-generator
 
-# Generate a container
+# Generate a container (global installation)
 orbitals-container-generate generate input.png -o container.wasm
+
+# Generate a container (local installation)
+npx orbitals-container-generate generate input.png -o container.wasm
+
+# Generate a container (from project directory)
+node ./dist/src/cli.js generate input.png -o container.wasm
+
+# Using relative paths
+orbitals-container-generate generate ./data/input.png -o ./output/container.wasm
+
+# Output to a subdirectory (will be created if it doesn't exist)
+orbitals-container-generate generate input.png -o output/subdir/container.wasm
+
+# Using a custom template
+orbitals-container-generate generate input.png -o container.wasm -t custom-template.wat
 ```
 
 ## Custom Transforms
