@@ -18,7 +18,7 @@ use std::sync::Arc;
 use alkanes_runtime::imports::__call;
 
 /// Orbital template ID - this is the template used for creating orbital instances
-pub const ORBITAL_TEMPLATE_ID: u128 = 1;
+pub const ORBITAL_TEMPLATE_ID: u128 = 0xe0e0;
 
 /// Collection alkane that acts as a factory for orbital instances
 #[derive(Default)]
@@ -118,7 +118,7 @@ impl Token for Collection {
         let symbol_pointer = StoragePointer::from_keyword("/symbol");
         let symbol_bytes = symbol_pointer.get();
         if symbol_bytes.len() == 0 {
-            return String::from("ORBCOL");
+            return String::from("Collection");
         }
         
         String::from_utf8_lossy(symbol_bytes.as_ref()).to_string()
