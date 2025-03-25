@@ -18,7 +18,7 @@ use std::sync::Arc;
 use alkanes_runtime::imports::__call;
 
 /// Orbital template ID - this is the template used for creating orbital instances
-pub const ORBITAL_TEMPLATE_ID: u128 = 0xe0e0;
+pub const ORBITAL_TEMPLATE_ID: u128 = 0xe0e2;
 
 /// Collection alkane that acts as a factory for orbital instances
 #[derive(Default)]
@@ -264,12 +264,14 @@ impl Collection {
         let mut storage_map_buffer = to_arraybuffer_layout::<&[u8]>(&alkanes_runtime::runtime::get_cache().serialize());
         
         // Call the __call host function directly
-        let call_result = __call(
-            to_passback_ptr(&mut cellpack_buffer),
-            to_passback_ptr(&mut outgoing_alkanes_buffer),
-            to_passback_ptr(&mut storage_map_buffer),
-            fuel,
-        );
+        let call_result = unsafe {
+            __call(
+                to_passback_ptr(&mut cellpack_buffer),
+                to_passback_ptr(&mut outgoing_alkanes_buffer),
+                to_passback_ptr(&mut storage_map_buffer),
+                fuel,
+            )
+        };
         
         // Check the result but don't process the return data
         match call_result {
@@ -451,7 +453,7 @@ impl Collection {
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()
+            <Self as AlkaneResponder>::fuel(&self)
         )?;
         
         // Pass the bytes with NO transform to the caller
