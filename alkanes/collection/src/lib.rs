@@ -322,14 +322,14 @@ impl Collection {
             inputs: vec![],
         };
         
-        self.call_without_returndata(
+        let _ = self.call_without_returndata(
             &container_cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()
-        )?;
+            1
+        );
 
         // Store the container sequence number
-        self.set_container_sequence(container_sequence);
+        self.set_container_sequence(container_sequence + 1);
 
         Ok(response)
     }
