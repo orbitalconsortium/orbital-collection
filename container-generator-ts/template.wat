@@ -18,6 +18,10 @@
     (local $buffer_ptr i32)
     (local $opcode i32)
     (local $i i32)
+    (local $result i32)
+    (local $dest i32)
+    (local $src i32)
+    (local $size i32)
     
     ;; Request context size
     (call $__request_context)
@@ -55,7 +59,7 @@
     (local.get $opcode)
     (i32.const 1000)
     (i32.eq)
-    (if
+    (if (result i32)                  ;; Explicitly declare that if returns i32
       (then
         ;; Opcode is 1000 (GetData), return the data
         ;; Create a CallResponse with empty alkanes and our data
@@ -76,11 +80,24 @@
         (i64.store)                   ;; Store at position 1024 + 8
         
         ;; Now copy our data after the alkanes count
+        ;; Calculate destination address
         (i32.const 1024)              ;; Destination base
         (i32.const 16)                ;; Destination offset (after alkanes count)
         (i32.add)                     ;; Destination address
+        (local.set $dest)             ;; Store in local
+        
+        ;; Set source address
         (i32.const 0)                 ;; Source address (our data)
+        (local.set $src)              ;; Store in local
+        
+        ;; Set size to copy
         (i32.const DATA_SIZE)         ;; Size to copy - will be replaced by script
+        (local.set $size)             ;; Store in local
+        
+        ;; Perform the memory copy
+        (local.get $dest)
+        (local.get $src)
+        (local.get $size)
         (memory.copy)                 ;; Copy the data
         
         ;; Now we need to create the arraybuffer layout
@@ -103,19 +120,32 @@
         (i32.store)                   ;; Store at position 2048
         
         ;; Now copy our CallResponse after the size
+        ;; Calculate destination address
         (i32.const 2048)              ;; Destination base
         (i32.const 4)                 ;; Destination offset (after size)
         (i32.add)                     ;; Destination address
+        (local.set $dest)             ;; Store in local
+        
+        ;; Set source address
         (i32.const 1024)              ;; Source address (our CallResponse)
+        (local.set $src)              ;; Store in local
+        
+        ;; Calculate size to copy
         (i32.const 16)                ;; 16 bytes for alkanes count
         (i32.const DATA_SIZE)         ;; Size of our data - will be replaced by script
         (i32.add)                     ;; Total size to copy
+        (local.set $size)             ;; Store in local
+        
+        ;; Perform the memory copy
+        (local.get $dest)
+        (local.get $src)
+        (local.get $size)
         (memory.copy)                 ;; Copy the data
         
         ;; Return the pointer to the arraybuffer layout + 4
         (local.get $buffer_ptr)       ;; Get the base address
         (i32.const 4)                 ;; Offset
-        (i32.add)                     ;; Add the offset
+        (i32.add)                     ;; Add the offset - this value is returned
       )
       (else
         ;; Opcode is not 1000, return an empty response
@@ -151,17 +181,30 @@
         (i32.store)                   ;; Store at position 2048
         
         ;; Now copy our CallResponse after the size
+        ;; Calculate destination address
         (i32.const 2048)              ;; Destination base
         (i32.const 4)                 ;; Destination offset (after size)
         (i32.add)                     ;; Destination address
+        (local.set $dest)             ;; Store in local
+        
+        ;; Set source address
         (i32.const 1024)              ;; Source address (our CallResponse)
+        (local.set $src)              ;; Store in local
+        
+        ;; Set size to copy
         (i32.const 16)                ;; 16 bytes for alkanes count (no data)
+        (local.set $size)             ;; Store in local
+        
+        ;; Perform the memory copy
+        (local.get $dest)
+        (local.get $src)
+        (local.get $size)
         (memory.copy)                 ;; Copy the data
         
         ;; Return the pointer to the arraybuffer layout + 4
         (local.get $buffer_ptr)       ;; Get the base address
         (i32.const 4)                 ;; Offset
-        (i32.add)                     ;; Add the offset
+        (i32.add)                     ;; Add the offset - this value is returned
       )
     )
   )

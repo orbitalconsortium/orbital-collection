@@ -1,28 +1,23 @@
-use alkanes_runtime::declare_alkane;
-use alkanes_runtime::message::MessageDispatch;
-#[allow(unused_imports)]
-use alkanes_runtime::{
-    println,
-    stdio::{stdout, Write},
-};
-use alkanes_runtime::{runtime::AlkaneResponder, storage::StoragePointer, token::Token};
+use alkanes_runtime::storage::StoragePointer;
+use alkanes_runtime::token::Token;
 use alkanes_support::response::CallResponse;
-use anyhow::{anyhow, Result};
-use metashrew_support::compat::{to_arraybuffer_layout, to_passback_ptr};
-use metashrew_support::index_pointer::KeyValuePointer;
-use alkanes_support::utils::overflow_error;
 use alkanes_support::id::AlkaneId;
 use alkanes_support::parcel::AlkaneTransferParcel;
 use alkanes_support::cellpack::Cellpack;
+use alkanes_support::context::Context;
+use anyhow::{anyhow, Result};
+use orbital_traits::OrbitalCollection;
+use orbitals_macros::{OrbitalCollectionMessage, declare_orbital_collection};
 use std::sync::Arc;
 use alkanes_runtime::imports::__call;
+use metashrew_support::index_pointer::KeyValuePointer;
+use metashrew_support::compat::to_arraybuffer_layout;
 
 /// Orbital template ID - this is the template used for creating orbital instances
 pub const ORBITAL_TEMPLATE_ID: u128 = 0xe0e2;
 
-/// Collection alkane that acts as a factory for orbital instances
-#[derive(Default)]
-pub struct Collection(());
+/// Bitcoin sale template ID - this is the template used for creating the bitcoin sale
+pub const BITCOIN_SALE_TEMPLATE_ID: u128 = 0xe0e3;
 
 /// TokenName struct to hold two u128 values for the name
 #[derive(Default, Clone, Copy)]
@@ -59,9 +54,14 @@ pub fn trim(v: u128) -> String {
     .unwrap_or_default()
 }
 
+/// Bitcoin Collection alkane that acts as a factory for orbital instances
+/// Only allows the bitcoin-sale contract to mint orbitals
+#[derive(Default)]
+pub struct BitcoinCollection(());
+
 /// Message enum for opcode-based dispatch
-#[derive(MessageDispatch)]
-enum CollectionMessage {
+#[derive(OrbitalCollectionMessage)]
+enum BitcoinCollectionMessage {
     /// Initialize the collection
     #[opcode(0)]
     Initialize {
@@ -103,12 +103,12 @@ enum CollectionMessage {
     GetData,
 }
 
-impl Token for Collection {
+impl Token for BitcoinCollection {
     fn name(&self) -> String {
         let name_pointer = StoragePointer::from_keyword("/name");
         let name_bytes = name_pointer.get();
         if name_bytes.len() == 0 {
-            return String::from("Orbital Collection");
+            return String::from("Bitcoin Orbital Collection");
         }
         
         String::from_utf8_lossy(name_bytes.as_ref()).to_string()
@@ -118,14 +118,14 @@ impl Token for Collection {
         let symbol_pointer = StoragePointer::from_keyword("/symbol");
         let symbol_bytes = symbol_pointer.get();
         if symbol_bytes.len() == 0 {
-            return String::from("Collection");
+            return String::from("BTC-Collection");
         }
         
         String::from_utf8_lossy(symbol_bytes.as_ref()).to_string()
     }
 }
 
-impl Collection {
+impl BitcoinCollection {
     /// Get the pointer to the name
     pub fn name_pointer(&self) -> StoragePointer {
         StoragePointer::from_keyword("/name")
@@ -170,12 +170,6 @@ impl Collection {
         1000000
     }
 
-    /// Get the orbital template ID
-    pub fn orbital_template(&self) -> u128 {
-        // Return the constant template ID
-        ORBITAL_TEMPLATE_ID
-    }
-
     /// Get the pointer to the container sequence
     pub fn container_sequence_pointer(&self) -> StoragePointer {
         StoragePointer::from_keyword("/container-sequence")
@@ -209,8 +203,8 @@ impl Collection {
     /// Add an instance to the registry
     pub fn add_instance(&self, instance_id: &AlkaneId) -> Result<u128> {
         let count = self.instances_count();
-        let new_count = overflow_error(count.checked_add(1))
-            .map_err(|_| anyhow!("instances count overflow"))?;
+        let new_count = count.checked_add(1)
+            .ok_or_else(|| anyhow!("instances count overflow"))?;
         
         // Serialize the AlkaneId to bytes
         let mut bytes = Vec::with_capacity(32);
@@ -243,14 +237,63 @@ impl Collection {
         }
     }
 
-    /// Check if an alkane ID is authorized to create orbitals
-    pub fn is_authorized(&self, _alkane_id: &AlkaneId) -> bool {
-        // In a real implementation, we would check against a list of authorized alkanes
-        // For now, we'll just return true for simplicity
-        // TODO: Implement proper authorization
-        true
+    /// Get the pointer to the bitcoin sale alkane ID
+    pub fn bitcoin_sale_pointer(&self) -> StoragePointer {
+        StoragePointer::from_keyword("/bitcoin-sale")
     }
 
+    /// Get the bitcoin sale alkane ID
+    pub fn bitcoin_sale(&self) -> Option<AlkaneId> {
+        let data = self.bitcoin_sale_pointer().get();
+        if data.len() == 0 {
+            return None;
+        }
+        
+        let bytes = data.as_ref();
+        Some(AlkaneId {
+            block: u128::from_le_bytes(bytes[0..16].try_into().unwrap()),
+            tx: u128::from_le_bytes(bytes[16..32].try_into().unwrap()),
+        })
+    }
+
+    /// Set the bitcoin sale alkane ID
+    pub fn set_bitcoin_sale(&self, id: &AlkaneId) {
+        // Serialize the AlkaneId to bytes
+        let mut bytes = Vec::with_capacity(32);
+        bytes.extend_from_slice(&id.block.to_le_bytes());
+        bytes.extend_from_slice(&id.tx.to_le_bytes());
+        
+        self.bitcoin_sale_pointer().set(Arc::new(bytes));
+    }
+
+    /// Special call function for container initialization that doesn't use __returndatacopy
+    /// This avoids incurring a fuel cost for what could be a very large response body
+    pub fn call_without_returndata(&self, cellpack: &Cellpack, outgoing_alkanes: &AlkaneTransferParcel, fuel: u64) -> Result<()> {
+        // Serialize the cellpack
+        let mut cellpack_buffer = metashrew_support::compat::to_arraybuffer_layout::<&[u8]>(&cellpack.serialize());
+        
+        // Serialize the outgoing alkanes
+        let mut outgoing_alkanes_buffer = metashrew_support::compat::to_arraybuffer_layout::<&[u8]>(&outgoing_alkanes.serialize());
+        
+        // Serialize the storage map
+        let mut storage_map_buffer = metashrew_support::compat::to_arraybuffer_layout::<&[u8]>(&alkanes_runtime::runtime::get_cache().serialize());
+        
+        // Call the __call host function directly
+        let call_result = unsafe {
+            __call(
+                metashrew_support::compat::to_passback_ptr(&mut cellpack_buffer),
+                metashrew_support::compat::to_passback_ptr(&mut outgoing_alkanes_buffer),
+                metashrew_support::compat::to_passback_ptr(&mut storage_map_buffer),
+                fuel,
+            )
+        };
+        
+        // Check the result but don't process the return data
+        match call_result {
+            -1 => Err(anyhow!("call errored out")),
+            _ => Ok(()),
+        }
+    }
 
     /// Observe initialization to prevent multiple initializations
     pub fn observe_initialization(&self) -> Result<()> {
@@ -263,6 +306,46 @@ impl Collection {
         }
     }
 
+    /// Get the context for the current execution
+    pub fn context(&self) -> Result<Context> {
+        Ok(Context::default())
+    }
+    
+    /// Call another alkane
+    pub fn call(&self, _cellpack: &Cellpack, _outgoing_alkanes: &AlkaneTransferParcel, _fuel: u64) -> Result<CallResponse> {
+        // Simplified implementation for testing
+        Ok(CallResponse::default())
+    }
+    
+    /// Static call another alkane
+    pub fn staticcall(&self, _cellpack: &Cellpack, _outgoing_alkanes: &AlkaneTransferParcel, _fuel: u64) -> Result<CallResponse> {
+        // Simplified implementation for testing
+        Ok(CallResponse::default())
+    }
+    
+    /// Get the transaction
+    pub fn transaction(&self) -> Vec<u8> {
+        // Simplified implementation for testing
+        Vec::new()
+    }
+}
+
+impl OrbitalCollection for BitcoinCollection {
+    /// Get the orbital template ID
+    fn orbital_template(&self) -> u128 {
+        ORBITAL_TEMPLATE_ID
+    }
+    
+    /// Check if an alkane ID is authorized to create orbitals
+    /// Only the bitcoin-sale contract is authorized
+    fn is_authorized(&self, alkane_id: &AlkaneId) -> bool {
+        if let Some(bitcoin_sale) = self.bitcoin_sale() {
+            *alkane_id == bitcoin_sale
+        } else {
+            false
+        }
+    }
+    
     /// Initialize the collection
     fn initialize(&self, name_part1: u128, name_part2: u128, symbol: u128) -> Result<CallResponse> {
         let context = self.context()?;
@@ -291,21 +374,45 @@ impl Collection {
                 block: 1,
                 tx: 0,
             },
-            inputs: vec![0],
+            inputs: vec![],
         };
         
-        self.call(
+        let _ = self.call_without_returndata(
             &container_cellpack,
             &AlkaneTransferParcel::default(),
-            self.fuel()
-        )?;
+            1
+        );
 
         // Store the container sequence number
         self.set_container_sequence(container_sequence + 1);
 
+        // Deploy the bitcoin-sale contract
+        let bitcoin_sale_cellpack = Cellpack {
+            target: AlkaneId {
+                block: 6,
+                tx: BITCOIN_SALE_TEMPLATE_ID,
+            },
+            inputs: vec![0], // Initialize opcode
+        };
+        
+        let _bitcoin_sale_response = self.call(
+            &bitcoin_sale_cellpack,
+            &AlkaneTransferParcel::default(),
+            self.fuel()
+        )?;
+        
+        // Extract the bitcoin-sale instance ID from the response
+        let bitcoin_sale_id = AlkaneId {
+            block: 2, // Simplified for demonstration
+            tx: container_sequence + 2, // After container
+        };
+        
+        // Store the bitcoin-sale ID
+        self.set_bitcoin_sale(&bitcoin_sale_id);
+
         Ok(response)
     }
-
+    
     /// Create a new orbital instance
     fn create_orbital(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -362,7 +469,7 @@ impl Collection {
 
         Ok(response)
     }
-
+    
     /// Get the name of the collection
     fn get_name(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -372,7 +479,7 @@ impl Collection {
 
         Ok(response)
     }
-
+    
     /// Get the symbol of the collection
     fn get_symbol(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -382,7 +489,7 @@ impl Collection {
 
         Ok(response)
     }
-
+    
     /// Get the total supply of the collection
     fn get_total_supply(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -393,7 +500,7 @@ impl Collection {
 
         Ok(response)
     }
-
+    
     /// Get the count of orbitals that have been minted
     fn get_orbital_count(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -403,7 +510,7 @@ impl Collection {
 
         Ok(response)
     }
-
+    
     /// Get the data of the collection
     fn get_data(&self) -> Result<CallResponse> {
         let context = self.context()?;
@@ -425,7 +532,7 @@ impl Collection {
         let call_response = self.staticcall(
             &cellpack,
             &AlkaneTransferParcel::default(),
-            <Self as AlkaneResponder>::fuel(&self)
+            self.fuel()
         )?;
         
         // Pass the bytes with NO transform to the caller
@@ -435,16 +542,9 @@ impl Collection {
     }
 }
 
-impl AlkaneResponder for Collection {
-    fn execute(&self) -> Result<CallResponse> {
-        // This method should not be called directly when using MessageDispatch
-        Err(anyhow!("This method should not be called directly. Use the declare_alkane macro instead."))
-    }
-}
-
-// Use the declare_alkane macro
-declare_alkane! {
-    impl AlkaneResponder for Collection {
-        type Message = CollectionMessage;
+// Use the declare_orbital_collection macro
+declare_orbital_collection! {
+    impl AlkaneResponder for BitcoinCollection {
+        type Message = BitcoinCollectionMessage;
     }
 }

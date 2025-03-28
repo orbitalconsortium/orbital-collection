@@ -1,0 +1,27 @@
+[package]
+name = "fr-btc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+test = []
+testnet = []
+dogecoin = []
+luckycoin = []
+bellscoin = []
+fractal = []
+mainnet = []
+
+
+[dependencies]
+alkanes-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+alkanes-runtime = { git = "https://github.com/kungfuflex/alkanes-rs" }
+metashrew-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+protorune-support = { git = "https://github.com/kungfuflex/alkanes-rs" }
+types-support = { git = "https://github.com/subfrost/subfrost-alkanes" }
+ordinals = { git = "https://github.com/kungfuflex/alkanes-rs" }
+anyhow = "1.0.94"
+bitcoin = { version = "0.32.5", features = ["rand"] }

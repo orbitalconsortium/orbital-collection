@@ -4,6 +4,7 @@
   "description": "Container generator for orbital collections",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "test": "jest",

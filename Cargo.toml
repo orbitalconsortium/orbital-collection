@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "alkanes/*"
+    "alkanes/*",
+    "crates/*"
 ]
 
 [workspace.dependencies]

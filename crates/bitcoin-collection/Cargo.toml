@@ -1,0 +1,16 @@
+[package]
+name = "bitcoin-collection"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+alkanes-runtime.workspace = true
+alkanes-support.workspace = true
+metashrew-support.workspace = true
+anyhow.workspace = true
+orbital-traits = { path = "../orbital-traits" }
+orbitals-macros = { path = "../orbitals-macros" }
+orbitals-support = { path = "../../alkanes/orbitals-support" }

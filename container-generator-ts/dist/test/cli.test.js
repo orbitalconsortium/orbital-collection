@@ -1,43 +1,8 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-const os = __importStar(require("os"));
-const child_process_1 = require("child_process");
-const pngjs_1 = require("pngjs");
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { execSync, spawn } from 'child_process';
+import { PNG } from 'pngjs';
 // Helper function to create a temporary directory
 function createTempDir() {
     const tempDir = path.join(os.tmpdir(), `orbitals-container-test-${Date.now()}`);
@@ -47,7 +12,7 @@ function createTempDir() {
 // Helper function to generate a random PNG file
 function generateRandomPng(filePath, width = 100, height = 100) {
     // Create a new PNG with the specified dimensions
-    const png = new pngjs_1.PNG({ width, height });
+    const png = new PNG({ width, height });
     // Fill with random pixel data
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -59,7 +24,7 @@ function generateRandomPng(filePath, width = 100, height = 100) {
         }
     }
     // Write the PNG to the file
-    const buffer = pngjs_1.PNG.sync.write(png);
+    const buffer = PNG.sync.write(png);
     fs.writeFileSync(filePath, buffer);
 }
 // Helper function to run the CLI process
@@ -68,7 +33,7 @@ function runCli(args) {
         // Get the path to the CLI script
         const cliPath = path.resolve(__dirname, '../dist/cli.js');
         // Spawn the process
-        const child = (0, child_process_1.spawn)('node', [cliPath, ...args], {
+        const child = spawn('node', [cliPath, ...args], {
             stdio: ['ignore', 'pipe', 'pipe']
         });
         // Collect stdout and stderr
@@ -97,7 +62,7 @@ describe('CLI Tests', () => {
         }
         catch (e) {
             console.log('Installing pngjs...');
-            (0, child_process_1.execSync)('npm install pngjs', { stdio: 'inherit' });
+            execSync('npm install pngjs', { stdio: 'inherit' });
         }
     });
     beforeEach(() => {

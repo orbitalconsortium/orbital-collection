@@ -1,18 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.dirPath = void 0;
-exports.generateWat = generateWat;
-exports.generateWasm = generateWasm;
-exports.defaultWat2Wasm = defaultWat2Wasm;
-exports.wabtWat2Wasm = wabtWat2Wasm;
-exports.generateContainerFromFile = generateContainerFromFile;
-exports.generateContainerFromFilePath = generateContainerFromFilePath;
-exports.generateContainerFromData = generateContainerFromData;
 // Browser version
 let fs;
 let path;
 // Use a different name to avoid conflicts
-exports.dirPath = '';
+export let dirPath = '';
 let isNode = false;
 // Check if we're in a Node.js environment
 try {
@@ -20,7 +10,7 @@ try {
     fs = require('fs');
     path = require('path');
     // Use the global __dirname if available
-    exports.dirPath = typeof __dirname !== 'undefined' ? __dirname : '';
+    dirPath = typeof __dirname !== 'undefined' ? __dirname : '';
     isNode = true;
 }
 catch (e) {
@@ -34,7 +24,7 @@ catch (e) {
  * @param options Options for generating the WAT file
  * @returns The WAT file content as a string
  */
-function generateWat(data, options = {}) {
+export function generateWat(data, options = {}) {
     // Get the template content
     let template = '';
     if (options.templateContent) {
@@ -48,8 +38,8 @@ function generateWat(data, options = {}) {
     else if (isNode) {
         // In Node.js, try to find the template file in several possible locations
         const possiblePaths = [
-            path.join(exports.dirPath, '..', 'template.wat'),
-            path.join(exports.dirPath, '..', '..', 'template.wat'),
+            path.join(dirPath, '..', 'template.wat'),
+            path.join(dirPath, '..', '..', 'template.wat'),
             path.join(process.cwd(), 'template.wat'),
             path.join(process.cwd(), 'node_modules', 'orbitals-container-generator', 'template.wat')
         ];
@@ -236,7 +226,7 @@ function generateWat(data, options = {}) {
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-async function generateWasm(data, wat2wasm, options = {}) {
+export async function generateWasm(data, wat2wasm, options = {}) {
     // Generate the WAT file
     const wat = generateWat(data, options);
     // Convert WAT to WASM using the provided function
@@ -250,7 +240,7 @@ async function generateWasm(data, wat2wasm, options = {}) {
  * @param wat WAT code to convert
  * @returns Promise that resolves to a placeholder Uint8Array
  */
-async function defaultWat2Wasm(wat) {
+export async function defaultWat2Wasm(wat) {
     // This is a placeholder implementation
     // In a real implementation, you would use a library like wabt.js
     console.warn('Using placeholder wat2wasm implementation. The generated WASM will not be valid.');
@@ -265,7 +255,7 @@ async function defaultWat2Wasm(wat) {
  * @param wat WAT code to convert
  * @returns Promise that resolves to the WASM binary
  */
-async function wabtWat2Wasm(wat) {
+export async function wabtWat2Wasm(wat) {
     // Check if we're in a browser environment
     const isBrowser = typeof window !== 'undefined';
     // Check if wabt is available
@@ -295,7 +285,7 @@ async function wabtWat2Wasm(wat) {
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-async function generateContainerFromFile(file, wat2wasm = defaultWat2Wasm, options = {}) {
+export async function generateContainerFromFile(file, wat2wasm = defaultWat2Wasm, options = {}) {
     // Read the file
     const data = await readFileAsArrayBuffer(file);
     // Generate the WASM
@@ -309,7 +299,7 @@ async function generateContainerFromFile(file, wat2wasm = defaultWat2Wasm, optio
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-async function generateContainerFromFilePath(filePath, wat2wasm, options = {}) {
+export async function generateContainerFromFilePath(filePath, wat2wasm, options = {}) {
     if (!isNode) {
         throw new Error('This function is only available in Node.js');
     }
@@ -326,7 +316,7 @@ async function generateContainerFromFilePath(filePath, wat2wasm, options = {}) {
  * @param options Options for generating the WASM file
  * @returns Promise that resolves to the WASM file content as a Uint8Array
  */
-async function generateContainerFromData(data, wat2wasm = defaultWat2Wasm, options = {}) {
+export async function generateContainerFromData(data, wat2wasm = defaultWat2Wasm, options = {}) {
     // Generate the WASM
     return await generateWasm(data, wat2wasm, options);
 }
